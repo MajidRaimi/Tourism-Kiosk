@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../screens/splash/splash_screen.dart';
+import '../screens/language/language_selection_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/explore/explore_screen.dart';
 import '../screens/details/attraction_details_screen.dart';
@@ -10,6 +11,7 @@ import '../models/attraction.dart';
 
 class AppRouter {
   static const String splash = '/';
+  static const String languageSelection = '/language-selection';
   static const String home = '/home';
   static const String explore = '/explore';
   static const String attractionDetails = '/attraction-details';
@@ -29,6 +31,26 @@ class AppRouter {
             return FadeTransition(
               opacity: animation,
               child: child,
+            );
+          },
+        ),
+      ),
+      GoRoute(
+        path: languageSelection,
+        name: 'languageSelection',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const LanguageSelectionScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.0, 0.1),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
             );
           },
         ),

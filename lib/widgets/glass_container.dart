@@ -5,22 +5,22 @@ class GlassContainer extends StatelessWidget {
   final Widget child;
   final double borderRadius;
   final double blur;
-  final Color? color;
-  final Border? border;
+  final Gradient? gradient;
   final EdgeInsetsGeometry? padding;
   final double? width;
   final double? height;
+  final List<BoxShadow>? boxShadow;
 
   const GlassContainer({
     super.key,
     required this.child,
     this.borderRadius = 24,
-    this.blur = 10,
-    this.color,
-    this.border,
+    this.blur = 20,
+    this.gradient,
     this.padding,
     this.width,
     this.height,
+    this.boxShadow,
   });
 
   @override
@@ -34,13 +34,25 @@ class GlassContainer extends StatelessWidget {
           height: height,
           padding: padding,
           decoration: BoxDecoration(
-            color: color ?? Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(borderRadius),
-            border: border ??
-                Border.all(
-                  color: Colors.white.withOpacity(0.2),
-                  width: 1.5,
+            gradient: gradient ??
+                LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(0.2),
+                    Colors.white.withOpacity(0.1),
+                  ],
                 ),
+            borderRadius: BorderRadius.circular(borderRadius),
+            boxShadow: boxShadow ??
+                [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                    spreadRadius: -5,
+                  ),
+                ],
           ),
           child: child,
         ),

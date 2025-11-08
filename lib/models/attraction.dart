@@ -11,6 +11,7 @@ class Attraction {
   final String openingHoursAr;
   final double latitude;
   final double longitude;
+  final double rating;
 
   Attraction({
     required this.id,
@@ -25,6 +26,7 @@ class Attraction {
     required this.openingHoursAr,
     required this.latitude,
     required this.longitude,
+    required this.rating,
   });
 
   static List<Attraction> dummyAttractions = [
@@ -41,6 +43,7 @@ class Attraction {
       openingHoursAr: 'مفتوح 24 ساعة',
       latitude: 24.4672,
       longitude: 39.6111,
+      rating: 4.9,
     ),
     Attraction(
       id: '2',
@@ -55,6 +58,7 @@ class Attraction {
       openingHoursAr: '9:00 صباحاً - 9:00 مساءً',
       latitude: 24.7333,
       longitude: 46.5750,
+      rating: 4.7,
     ),
     Attraction(
       id: '3',
@@ -69,6 +73,7 @@ class Attraction {
       openingHoursAr: 'مفتوح يومياً (ساعات النهار)',
       latitude: 24.9347,
       longitude: 46.1436,
+      rating: 4.8,
     ),
     Attraction(
       id: '4',
@@ -83,6 +88,7 @@ class Attraction {
       openingHoursAr: '10:00 صباحاً - 10:00 مساءً',
       latitude: 21.4858,
       longitude: 39.1925,
+      rating: 4.6,
     ),
     Attraction(
       id: '5',
@@ -97,6 +103,7 @@ class Attraction {
       openingHoursAr: '9:00 صباحاً - 11:00 مساءً',
       latitude: 24.7114,
       longitude: 46.6753,
+      rating: 4.5,
     ),
   ];
 }

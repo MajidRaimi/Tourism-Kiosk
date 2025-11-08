@@ -9,6 +9,8 @@ class CategoryTile extends StatelessWidget {
   final String titleKey;
   final VoidCallback onTap;
   final Color? backgroundColor;
+  final bool isLarge;
+  final bool isEmergency;
 
   const CategoryTile({
     super.key,
@@ -16,65 +18,100 @@ class CategoryTile extends StatelessWidget {
     required this.titleKey,
     required this.onTap,
     this.backgroundColor,
+    this.isLarge = false,
+    this.isEmergency = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final iconSize = isLarge ? 140.sp : 100.sp;
+    final textSize = isLarge ? 32.sp : 20.sp;
+
+    final gradientColors = isEmergency
+        ? [
+            Colors.red.withOpacity(0.4),
+            Colors.red.shade900.withOpacity(0.3),
+          ]
+        : [
+            Colors.white.withOpacity(0.2),
+            Colors.white.withOpacity(0.1),
+          ];
+
+    final iconColor = isEmergency ? Colors.red.shade100 : AppTheme.beigeAccent;
+    final splashColor = isEmergency
+        ? Colors.red.withOpacity(0.3)
+        : AppTheme.lightGreen.withOpacity(0.3);
+
     return ClipRRect(
-      borderRadius: BorderRadius.circular(28.r),
+      borderRadius: BorderRadius.circular(24.r),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(28.r),
-            splashColor: Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(24.r),
+            splashColor: splashColor,
             child: Container(
-              padding: EdgeInsets.all(24.w),
               decoration: BoxDecoration(
-                // Semi-transparent white for glass effect
-                color: backgroundColor ?? Colors.white.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(28.r),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.25),
-                  width: 1.5,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: gradientColors,
                 ),
+                borderRadius: BorderRadius.circular(24.r),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: isEmergency
+                        ? Colors.red.withOpacity(0.3)
+                        : Colors.black.withOpacity(0.2),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
+                    spreadRadius: -5,
                   ),
                 ],
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Stack(
                 children: [
-                  Container(
-                    padding: EdgeInsets.all(16.w),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryGreen.withOpacity(0.15),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppTheme.primaryGreen.withOpacity(0.3),
-                        width: 2,
+                  // Icon as background shade
+                  Positioned(
+                    right: 10,
+                    top: 10,
+                    child: Opacity(
+                      opacity: 0.15,
+                      child: Icon(
+                        icon,
+                        size: iconSize,
+                        color: iconColor,
                       ),
                     ),
-                    child: Icon(
-                      icon,
-                      size: 48.sp,
-                      color: AppTheme.primaryGreen,
-                    ),
                   ),
-                  SizedBox(height: 16.h),
-                  LocaleText(
-                    titleKey,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryGreen,
+                  // Content
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 24.w,
+                      vertical: 20.h,
+                    ),
+                    child: Align(
+                      alignment: Alignment.bottomLeft,
+                      child: LocaleText(
+                        titleKey,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: textSize,
+                          color: AppTheme.whiteText,
+                          fontWeight: FontWeight.w900,
+                          height: 1.2,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black.withOpacity(0.4),
+                              offset: const Offset(0, 2),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],

@@ -39,6 +39,7 @@ dependencies:
   geolocator: ^14.0.2
   http: ^1.5.0
   adhan: ^2.0.0+1
+  qr_flutter: ^4.1.0
 
 dev_dependencies:
 
@@ -62,6 +63,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/locales/
+    - assets/images/
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
   # For details regarding adding assets from package dependencies, see

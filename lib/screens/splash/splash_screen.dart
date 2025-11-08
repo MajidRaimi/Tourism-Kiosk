@@ -2,29 +2,31 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_locales/flutter_locales.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/app_theme.dart';
 import '../../router/app_router.dart';
 import '../../widgets/glass_container.dart';
+import '../../providers/location_provider.dart';
+import '../../services/prayer_time_service.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
-  late AnimationController _subtitleAnimationController;
   late Animation<double> _fadeAnimation;
-  late Animation<double> _slideAnimation;
-  late Animation<double> _scaleAnimation;
   Timer? _welcomeTimer;
+  Timer? _clockTimer;
   int _currentWelcomeIndex = 0;
   String? _selectedLanguage;
+  String _currentTime = '';
 
   final List<Map<String, String>> _welcomeMessages = [
     {'text': 'Welcome to Saudi Arabia', 'lang': 'English'},
@@ -54,31 +56,26 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
     );
 
-    _subtitleAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    )..repeat(reverse: true);
-
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
-    _slideAnimation = Tween<double>(begin: -20.0, end: 0.0).animate(
-      CurvedAnimation(
-        parent: _subtitleAnimationController,
-        curve: Curves.easeInOut,
-      ),
-    );
-
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
-      CurvedAnimation(
-        parent: _subtitleAnimationController,
-        curve: Curves.easeInOut,
-      ),
-    );
-
     _animationController.forward();
     _startWelcomeRotation();
+    _updateTime();
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _updateTime();
+    });
+  }
+
+  void _updateTime() {
+    if (mounted) {
+      setState(() {
+        final now = DateTime.now();
+        _currentTime =
+            '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+      });
+    }
   }
 
   void _startWelcomeRotation() {
@@ -97,280 +94,559 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void dispose() {
     _welcomeTimer?.cancel();
+    _clockTimer?.cancel();
     _animationController.dispose();
-    _subtitleAnimationController.dispose();
     super.dispose();
   }
 
-  void _changeLanguage(String languageCode) {
-    Locales.change(context, languageCode);
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        context.go(AppRouter.home);
-      }
-    });
+  void _goToLanguageSelection() {
+    context.push(AppRouter.languageSelection);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-        ),
-        child: Stack(
-          children: [
-            // Background decorative circles
-            Positioned(
-              top: -100.h,
-              right: -100.w,
-              child: Container(
-                width: 300.w,
-                height: 300.h,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppTheme.beigeAccent.withOpacity(0.1),
-                ),
+      body: Stack(
+        children: [
+          // Background image
+          Positioned.fill(
+            child: Image.asset('assets/images/riyadh.jpg', fit: BoxFit.cover),
+          ),
+          // Primary color overlay
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppTheme.primaryGreen.withOpacity(0.85),
               ),
             ),
-            Positioned(
-              bottom: -150.h,
-              left: -150.w,
-              child: Container(
-                width: 400.w,
-                height: 400.h,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppTheme.lightGreen.withOpacity(0.08),
+          ),
+          Container(
+            child: Stack(
+              children: [
+                // Background decorative circles
+                Positioned(
+                  top: -100.h,
+                  right: -100.w,
+                  child: Container(
+                    width: 300.w,
+                    height: 300.h,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppTheme.beigeAccent.withOpacity(0.1),
+                    ),
+                  ),
                 ),
-              ),
-            ),
+                Positioned(
+                  bottom: -150.h,
+                  left: -150.w,
+                  child: Container(
+                    width: 400.w,
+                    height: 400.h,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppTheme.lightGreen.withOpacity(0.08),
+                    ),
+                  ),
+                ),
 
-            SafeArea(
-              child: Center(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 48.w),
+                SafeArea(
+                  child: Center(
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        SizedBox(height: 80.h),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 48.w),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(height: 40.h),
 
-                        // Logo with Glassmorphic effect
-                        GlassContainer(
-                          borderRadius: 50.r,
-                          blur: 15,
-                          padding: EdgeInsets.all(50.w),
-                          child: Icon(
-                            Icons.mosque,
-                            size: 120.sp,
-                            color: AppTheme.whiteText,
-                          ),
-                        ),
-
-                        SizedBox(height: 60.h),
-
-                        // Animated Welcome Text
-                        SizedBox(
-                          height: 120.h,
-                          child: FadeTransition(
-                            opacity: _fadeAnimation,
-                            child: Column(
-                              children: [
-                                Text(
-                                  _welcomeMessages[_currentWelcomeIndex]['text']!,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 32.sp,
-                                    color: AppTheme.whiteText,
-                                    fontWeight: FontWeight.bold,
-                                    height: 1.3,
-                                    shadows: [
-                                      Shadow(
-                                        color: Colors.black.withOpacity(0.3),
-                                        offset: const Offset(0, 2),
-                                        blurRadius: 8,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(height: 12.h),
-                                Text(
-                                  _welcomeMessages[_currentWelcomeIndex]['lang']!,
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    color: AppTheme.beigeAccent,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 2,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        SizedBox(height: 40.h),
-
-                        // Animated Subtitle
-                        AnimatedBuilder(
-                          animation: _subtitleAnimationController,
-                          builder: (context, child) {
-                            return Transform.translate(
-                              offset: Offset(0, _slideAnimation.value),
-                              child: Transform.scale(
-                                scale: _scaleAnimation.value,
-                                child: Text(
-                                  'Explore the Kingdom',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 20.sp,
-                                    color: AppTheme.whiteText.withOpacity(0.9),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-
-                        SizedBox(height: 80.h),
-
-                        // Language Selector Label
-                        Text(
-                          'Choose Your Language',
-                          style: TextStyle(
-                            fontSize: 18.sp,
-                            color: AppTheme.whiteText.withOpacity(0.9),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-
-                        SizedBox(height: 24.h),
-
-                        // Glassmorphic Language Dropdown
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(24.r),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                            child: Container(
-                              width: double.infinity,
-                              constraints: BoxConstraints(maxWidth: 500.w),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(24.r),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.3),
-                                  width: 2,
-                                ),
-                              ),
-                              child: Theme(
-                                data: Theme.of(context).copyWith(
-                                  canvasColor: Colors.transparent,
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    value: _selectedLanguage,
-                                    hint: Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 24.w,
-                                        vertical: 20.h,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.language,
-                                            color: AppTheme.whiteText,
-                                            size: 28.sp,
+                              // Bento Grid Info Cards
+                              Container(
+                                height: 200.h,
+                                child: Row(
+                                  children: [
+                                    // Left side - Large Time & City Card with Map
+                                    Expanded(
+                                      flex: 2,
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(
+                                          24.r,
+                                        ),
+                                        child: BackdropFilter(
+                                          filter: ImageFilter.blur(
+                                            sigmaX: 20,
+                                            sigmaY: 20,
                                           ),
-                                          SizedBox(width: 16.w),
-                                          Text(
-                                            'Select Language / اختر اللغة',
-                                            style: TextStyle(
-                                              fontSize: 18.sp,
-                                              color: AppTheme.whiteText,
-                                              fontWeight: FontWeight.w600,
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                                colors: [
+                                                  Colors.white.withOpacity(0.2),
+                                                  Colors.white.withOpacity(0.1),
+                                                ],
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(24.r),
+                                            ),
+                                            child: Stack(
+                                              children: [
+                                                // Map SVG Background
+                                                Positioned(
+                                                  right: -20,
+                                                  bottom: -20,
+                                                  child: Opacity(
+                                                    opacity: 0.15,
+                                                    child: Icon(
+                                                      Icons.map_outlined,
+                                                      size: 140.sp,
+                                                      color:
+                                                          AppTheme.beigeAccent,
+                                                    ),
+                                                  ),
+                                                ),
+                                                // Content
+                                                Padding(
+                                                  padding: EdgeInsets.all(24.w),
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Row(
+                                                        children: [
+                                                          Icon(
+                                                            Icons.location_on,
+                                                            color: AppTheme
+                                                                .beigeAccent,
+                                                            size: 28.sp,
+                                                          ),
+                                                          SizedBox(width: 12.w),
+                                                          Text(
+                                                            'Riyadh, Saudi Arabia',
+                                                            style: TextStyle(
+                                                              fontSize: 18.sp,
+                                                              color: AppTheme
+                                                                  .whiteText,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      Row(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .end,
+                                                        children: [
+                                                          Icon(
+                                                            Icons.access_time,
+                                                            color: AppTheme
+                                                                .beigeAccent,
+                                                            size: 32.sp,
+                                                          ),
+                                                          SizedBox(width: 12.w),
+                                                          Text(
+                                                            _currentTime.isEmpty
+                                                                ? '00:00'
+                                                                : _currentTime,
+                                                            style: TextStyle(
+                                                              fontSize: 56.sp,
+                                                              color: AppTheme
+                                                                  .whiteText,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w900,
+                                                              height: 1.0,
+                                                              shadows: [
+                                                                Shadow(
+                                                                  color: Colors
+                                                                      .black
+                                                                      .withOpacity(
+                                                                        0.3,
+                                                                      ),
+                                                                  offset:
+                                                                      const Offset(
+                                                                        0,
+                                                                        2,
+                                                                      ),
+                                                                  blurRadius: 8,
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 12.w),
+
+                                    // Right side - Stacked Weather & Prayer Cards
+                                    Expanded(
+                                      flex: 1,
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        // take the full height of the column
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          // Weather Card - Top
+                                          Expanded(
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(24.r),
+                                              child: BackdropFilter(
+                                                filter: ImageFilter.blur(
+                                                  sigmaX: 20,
+                                                  sigmaY: 20,
+                                                ),
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    gradient: LinearGradient(
+                                                      begin: Alignment.topLeft,
+                                                      end:
+                                                          Alignment.bottomRight,
+                                                      colors: [
+                                                        Colors.white
+                                                            .withOpacity(0.2),
+                                                        Colors.white
+                                                            .withOpacity(0.1),
+                                                      ],
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          24.r,
+                                                        ),
+                                                  ),
+                                                  padding: EdgeInsets.all(16.w),
+                                                  child: Column(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.wb_sunny,
+                                                        color: AppTheme
+                                                            .beigeAccent,
+                                                        size: 36.sp,
+                                                      ),
+                                                      SizedBox(height: 6.h),
+                                                      Text(
+                                                        '28°C',
+                                                        style: TextStyle(
+                                                          fontSize: 28.sp,
+                                                          color: AppTheme
+                                                              .whiteText,
+                                                          fontWeight:
+                                                              FontWeight.w900,
+                                                          shadows: [
+                                                            Shadow(
+                                                              color: Colors
+                                                                  .black
+                                                                  .withOpacity(
+                                                                    0.3,
+                                                                  ),
+                                                              offset:
+                                                                  const Offset(
+                                                                    0,
+                                                                    2,
+                                                                  ),
+                                                              blurRadius: 6,
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        'Sunny',
+                                                        style: TextStyle(
+                                                          fontSize: 13.sp,
+                                                          color: AppTheme
+                                                              .beigeAccent,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(height: 12.h),
+
+                                          // Prayer Time Card - Bottom
+                                          Expanded(
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(24.r),
+                                              child: BackdropFilter(
+                                                filter: ImageFilter.blur(
+                                                  sigmaX: 20,
+                                                  sigmaY: 20,
+                                                ),
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    gradient: LinearGradient(
+                                                      begin: Alignment.topLeft,
+                                                      end:
+                                                          Alignment.bottomRight,
+                                                      colors: [
+                                                        Colors.white
+                                                            .withOpacity(0.2),
+                                                        Colors.white
+                                                            .withOpacity(0.1),
+                                                      ],
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          24.r,
+                                                        ),
+                                                  ),
+                                                  padding: EdgeInsets.all(16.w),
+                                                  child: Column(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.mosque,
+                                                        color: AppTheme
+                                                            .beigeAccent,
+                                                        size: 28.sp,
+                                                      ),
+                                                      SizedBox(height: 6.h),
+                                                      Text(
+                                                        'Maghrib',
+                                                        style: TextStyle(
+                                                          fontSize: 14.sp,
+                                                          color: AppTheme
+                                                              .beigeAccent,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        '18:30',
+                                                        style: TextStyle(
+                                                          fontSize: 24.sp,
+                                                          color: AppTheme
+                                                              .whiteText,
+                                                          fontWeight:
+                                                              FontWeight.w900,
+                                                          shadows: [
+                                                            Shadow(
+                                                              color: Colors
+                                                                  .black
+                                                                  .withOpacity(
+                                                                    0.3,
+                                                                  ),
+                                                              offset:
+                                                                  const Offset(
+                                                                    0,
+                                                                    2,
+                                                                  ),
+                                                              blurRadius: 6,
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
                                             ),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    isExpanded: true,
-                                    icon: Padding(
-                                      padding: EdgeInsets.only(right: 20.w),
-                                      child: Icon(
-                                        Icons.keyboard_arrow_down,
-                                        color: AppTheme.whiteText,
-                                        size: 32.sp,
-                                      ),
-                                    ),
-                                    dropdownColor:
-                                        AppTheme.primaryGreen.withOpacity(0.95),
-                                    borderRadius: BorderRadius.circular(20.r),
-                                    items: _languages.map((lang) {
-                                      return DropdownMenuItem<String>(
-                                        value: lang['code'],
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(16.r),
-                                          child: BackdropFilter(
-                                            filter: ImageFilter.blur(
-                                                sigmaX: 10, sigmaY: 10),
-                                            child: Container(
-                                              padding: EdgeInsets.symmetric(
-                                                horizontal: 20.w,
-                                                vertical: 16.h,
+                                  ],
+                                ),
+                              ),
+
+                              SizedBox(height: 60.h),
+
+                              // Animated Welcome Text
+                              SizedBox(
+                                height: 150.h,
+                                child: FadeTransition(
+                                  opacity: _fadeAnimation,
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        _welcomeMessages[_currentWelcomeIndex]['text']!,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 48.sp,
+                                          color: AppTheme.whiteText,
+                                          fontWeight: FontWeight.w900,
+                                          height: 1.3,
+                                          letterSpacing: 1.2,
+                                          shadows: [
+                                            Shadow(
+                                              color: Colors.black.withOpacity(
+                                                0.4,
                                               ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.white.withOpacity(0.1),
-                                                borderRadius:
-                                                    BorderRadius.circular(16.r),
-                                              ),
-                                              child: Row(
-                                                children: [
-                                                  Text(
-                                                    lang['flag']!,
-                                                    style: TextStyle(fontSize: 28.sp),
-                                                  ),
-                                                  SizedBox(width: 16.w),
-                                                  Text(
-                                                    lang['name']!,
-                                                    style: TextStyle(
-                                                      fontSize: 18.sp,
-                                                      color: AppTheme.whiteText,
-                                                      fontWeight: FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
+                                              offset: const Offset(0, 3),
+                                              blurRadius: 12,
                                             ),
-                                          ),
+                                          ],
                                         ),
-                                      );
-                                    }).toList(),
-                                    onChanged: (String? value) {
-                                      if (value != null) {
-                                        setState(() {
-                                          _selectedLanguage = value;
-                                        });
-                                        _changeLanguage(value);
-                                      }
-                                    },
+                                      ),
+                                      SizedBox(height: 16.h),
+                                      Text(
+                                        _welcomeMessages[_currentWelcomeIndex]['lang']!,
+                                        style: TextStyle(
+                                          fontSize: 24.sp,
+                                          color: AppTheme.beigeAccent,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 3,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
-                            ),
+
+                              SizedBox(height: 80.h),
+
+                              // Start Now Button with cycling language - Primary Green Glassmorphic
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(30.r),
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(
+                                    sigmaX: 20,
+                                    sigmaY: 20,
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: _goToLanguageSelection,
+                                      borderRadius: BorderRadius.circular(30.r),
+                                      splashColor: AppTheme.lightGreen
+                                          .withOpacity(0.3),
+                                      child: Container(
+                                        width: double.infinity,
+                                        constraints: BoxConstraints(
+                                          maxWidth: 600.w,
+                                        ),
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 60.w,
+                                          vertical: 45.h,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              AppTheme.primaryGreen.withOpacity(
+                                                0.5,
+                                              ),
+                                              AppTheme.secondaryGreen
+                                                  .withOpacity(0.4),
+                                            ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            30.r,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(
+                                                0.3,
+                                              ),
+                                              blurRadius: 35,
+                                              offset: const Offset(0, 20),
+                                              spreadRadius: -5,
+                                            ),
+                                            BoxShadow(
+                                              color: AppTheme.primaryGreen
+                                                  .withOpacity(0.4),
+                                              blurRadius: 30,
+                                              offset: const Offset(0, 10),
+                                              spreadRadius: -5,
+                                            ),
+                                            BoxShadow(
+                                              color: AppTheme.beigeAccent
+                                                  .withOpacity(0.2),
+                                              blurRadius: 25,
+                                              offset: const Offset(0, 5),
+                                            ),
+                                          ],
+                                        ),
+                                        child: FadeTransition(
+                                          opacity: _fadeAnimation,
+                                          child: Text(
+                                            _getStartNowText(
+                                              _currentWelcomeIndex,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: 42.sp,
+                                              color: AppTheme.whiteText,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 2,
+                                              shadows: [
+                                                Shadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.5),
+                                                  offset: const Offset(0, 4),
+                                                  blurRadius: 15,
+                                                ),
+                                                Shadow(
+                                                  color: AppTheme.primaryGreen
+                                                      .withOpacity(0.8),
+                                                  offset: const Offset(0, 2),
+                                                  blurRadius: 8,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              SizedBox(height: 100.h),
+                            ],
                           ),
                         ),
-
-                        SizedBox(height: 100.h),
                       ],
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
+  }
+
+  String _getStartNowText(int index) {
+    final startNowTexts = [
+      'Start Now',
+      'ابدأ الآن',
+      'Commencer',
+      'Empezar',
+      '开始',
+      'शुरू करें',
+      'شروع کریں',
+    ];
+    return startNowTexts[index];
   }
 }

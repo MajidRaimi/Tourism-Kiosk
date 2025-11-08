@@ -22,411 +22,238 @@ class HomeScreen extends ConsumerWidget {
     final prayerAsync = ref.watch(nextPrayerProvider);
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.primaryGreen,
-              AppTheme.secondaryGreen,
-              AppTheme.lightGray,
-            ],
-            stops: const [0.0, 0.4, 1.0],
+      body: Stack(
+        children: [
+          // Background image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/desset.jpg',
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: Stack(
-          children: [
-            // Background decorative circles
-            Positioned(
-              top: -50,
-              right: -80,
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppTheme.beigeAccent.withOpacity(0.1),
-                ),
+          // Primary color overlay
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppTheme.primaryGreen.withOpacity(0.85),
               ),
             ),
-            Positioned(
-              bottom: 100,
-              left: -100,
-              child: Container(
-                width: 400,
-                height: 400,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppTheme.lightGreen.withOpacity(0.08),
+          ),
+          Container(
+            child: Stack(
+              children: [
+                // Background decorative circles
+                Positioned(
+                  top: -50,
+                  right: -80,
+                  child: Container(
+                    width: 300,
+                    height: 300,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppTheme.beigeAccent.withOpacity(0.1),
+                    ),
+                  ),
                 ),
-              ),
-            ),
+                Positioned(
+                  bottom: 100,
+                  left: -100,
+                  child: Container(
+                    width: 400,
+                    height: 400,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppTheme.lightGreen.withOpacity(0.08),
+                    ),
+                  ),
+                ),
 
             SafeArea(
-              child: Column(
-                children: [
-                  // Glass Header
-                  Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
+              child: Padding(
+                padding: EdgeInsets.all(48.w),
+                child: Column(
+                  children: [
+                    // Back Button
+                    Row(
                       children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Location & Weather Glass Container
-                            Expanded(
-                              flex: 2,
-                              child: GlassContainer(
-                                borderRadius: 20.r,
-                                blur: 12,
-                                padding: EdgeInsets.all(20.w),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Location
-                                    cityAsync.when(
-                                      data: (city) => Row(
-                                        children: [
-                                          Icon(
-                                            Icons.location_on,
-                                            color: AppTheme.beigeAccent,
-                                            size: 20.sp,
-                                          ),
-                                          SizedBox(width: 8.w),
-                                          Expanded(
-                                            child: Text(
-                                              city,
-                                              style: TextStyle(
-                                                fontSize: 16.sp,
-                                                color: AppTheme.whiteText
-                                                    .withOpacity(0.9),
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      loading: () => Row(
-                                        children: [
-                                          Icon(Icons.location_on,
-                                              color: AppTheme.beigeAccent,
-                                              size: 20.sp),
-                                          SizedBox(width: 8.w),
-                                          Text('Loading...',
-                                              style: TextStyle(
-                                                  fontSize: 16.sp,
-                                                  color: AppTheme.whiteText)),
-                                        ],
-                                      ),
-                                      error: (_, __) => Row(
-                                        children: [
-                                          Icon(Icons.location_on,
-                                              color: AppTheme.beigeAccent,
-                                              size: 20.sp),
-                                          SizedBox(width: 8.w),
-                                          Text('Saudi Arabia',
-                                              style: TextStyle(
-                                                  fontSize: 16.sp,
-                                                  color: AppTheme.whiteText)),
-                                        ],
-                                      ),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(20.r),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () => Navigator.of(context).pop(),
+                                borderRadius: BorderRadius.circular(20.r),
+                                splashColor: AppTheme.lightGreen.withOpacity(0.3),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Colors.white.withOpacity(0.2),
+                                        Colors.white.withOpacity(0.1),
+                                      ],
                                     ),
-                                    SizedBox(height: 16.h),
-                                    // Weather
-                                    weatherAsync.when(
-                                      data: (weather) {
-                                        if (weather != null) {
-                                          return Row(
-                                            children: [
-                                              Text(
-                                                weather['icon'],
-                                                style: TextStyle(fontSize: 40.sp),
-                                              ),
-                                              SizedBox(width: 12.w),
-                                              Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    '${weather['temperature']}°C',
-                                                    style: TextStyle(
-                                                      fontSize: 32.sp,
-                                                      color: AppTheme.whiteText,
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    _getCurrentDate(),
-                                                    style: TextStyle(
-                                                      fontSize: 12.sp,
-                                                      color: AppTheme.whiteText
-                                                          .withOpacity(0.8),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          );
-                                        }
-                                        return const SizedBox.shrink();
-                                      },
-                                      loading: () => const CircularProgressIndicator(
-                                        color: AppTheme.whiteText,
-                                      ),
-                                      error: (_, __) => Row(
-                                        children: [
-                                          const Icon(Icons.wb_sunny,
-                                              color: AppTheme.beigeAccent,
-                                              size: 32),
-                                          const SizedBox(width: 12),
-                                          Text('--°C',
-                                              style: TextStyle(
-                                                  fontSize: 24.sp,
-                                                  color: AppTheme.whiteText)),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-
-                            SizedBox(width: 16.w),
-
-                            // Prayer Time Container
-                            Expanded(
-                              child: GlassContainer(
-                                borderRadius: 20.r,
-                                blur: 12,
-                                padding: EdgeInsets.all(20.w),
-                                child: prayerAsync.when(
-                                  data: (prayer) => Column(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.mosque,
-                                        color: AppTheme.beigeAccent,
-                                        size: 32.sp,
-                                      ),
-                                      SizedBox(height: 8.h),
-                                      Text(
-                                        isArabic
-                                            ? prayer['nameAr']
-                                            : prayer['name'],
-                                        style: TextStyle(
-                                          fontSize: 16.sp,
-                                          color: AppTheme.whiteText,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      SizedBox(height: 4.h),
-                                      Text(
-                                        PrayerTimeService.formatTime(
-                                            prayer['time']),
-                                        style: TextStyle(
-                                          fontSize: 20.sp,
-                                          color: AppTheme.whiteText,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  loading: () => const CircularProgressIndicator(
-                                    color: AppTheme.whiteText,
-                                  ),
-                                  error: (_, __) => Column(
-                                    children: [
-                                      Icon(Icons.mosque,
-                                          color: AppTheme.beigeAccent,
-                                          size: 32.sp),
-                                      SizedBox(height: 8.h),
-                                      Text('--:--',
-                                          style: TextStyle(
-                                              fontSize: 20.sp,
-                                              color: AppTheme.whiteText)),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            SizedBox(width: 16.w),
-
-                            // Accessibility Button
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(20.r),
-                              child: BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () {
-                                      context.push(AppRouter.accessibility);
-                                    },
                                     borderRadius: BorderRadius.circular(20.r),
-                                    child: Container(
-                                      padding: EdgeInsets.all(20.w),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.15),
-                                        borderRadius: BorderRadius.circular(20.r),
-                                        border: Border.all(
-                                          color: Colors.white.withOpacity(0.25),
-                                          width: 1.5,
-                                        ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.2),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 10),
+                                        spreadRadius: -5,
                                       ),
-                                      child: Icon(
-                                        Icons.accessibility_new,
-                                        color: AppTheme.whiteText,
-                                        size: 32.sp,
-                                      ),
-                                    ),
+                                    ],
+                                  ),
+                                  padding: EdgeInsets.all(16.w),
+                                  child: Icon(
+                                    Icons.chevron_left,
+                                    color: AppTheme.whiteText,
+                                    size: 32.sp,
                                   ),
                                 ),
                               ),
                             ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // Home Title
-                        LocaleText(
-                          'home',
-                          style: Theme.of(context)
-                              .textTheme
-                              .displaySmall
-                              ?.copyWith(
-                                color: AppTheme.whiteText,
-                                fontWeight: FontWeight.bold,
-                                shadows: [
-                                  Shadow(
-                                    color: Colors.black.withOpacity(0.2),
-                                    offset: const Offset(0, 2),
-                                    blurRadius: 8,
-                                  ),
-                                ],
-                              ),
+                          ),
                         ),
                       ],
                     ),
-                  ),
 
-                  // Main Content - Category Tiles
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
-                      child: GridView.count(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 20,
-                        mainAxisSpacing: 20,
-                        childAspectRatio: 1.1,
-                        children: [
-                          CategoryTile(
-                            icon: Icons.explore,
-                            titleKey: 'explore_nearby',
-                            onTap: () {
-                              context.push(AppRouter.explore);
-                            },
-                          ),
-                          CategoryTile(
-                            icon: Icons.mosque,
-                            titleKey: 'heritage_culture',
-                            onTap: () {
-                              context.push(AppRouter.explore);
-                            },
-                          ),
-                          CategoryTile(
-                            icon: Icons.restaurant,
-                            titleKey: 'food_restaurants',
-                            onTap: () {
-                              context.push(AppRouter.explore);
-                            },
-                          ),
-                          CategoryTile(
-                            icon: Icons.event,
-                            titleKey: 'events_mice',
-                            onTap: () {
-                              context.push(AppRouter.events);
-                            },
-                          ),
-                          CategoryTile(
-                            icon: Icons.directions_bus,
-                            titleKey: 'transport_directions',
-                            onTap: () {
-                              _showComingSoonDialog(context);
-                            },
-                          ),
-                          CategoryTile(
-                            icon: Icons.help_outline,
-                            titleKey: 'emergency_support',
-                            onTap: () {
-                              _showEmergencyDialog(context);
-                            },
+                    SizedBox(height: 40.h),
+
+                    // Title
+                    LocaleText(
+                      'home',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 48.sp,
+                        color: AppTheme.whiteText,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withOpacity(0.4),
+                            offset: const Offset(0, 3),
+                            blurRadius: 12,
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ],
+                    SizedBox(height: 16.h),
+                    Text(
+                      'Explore amazing places and experiences',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20.sp,
+                        color: AppTheme.beigeAccent,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+
+                    SizedBox(height: 60.h),
+
+                    // Main Content - Asymmetric Bento Grid
+                    Expanded(
+                      child: Column(
+                        children: [
+                          // Row 1 - Large + Medium
+                          Expanded(
+                            flex: 2,
+                            child: Row(
+                              children: [
+                                // Large tile - Explore
+                                Expanded(
+                                  flex: 2,
+                                  child: CategoryTile(
+                                    icon: Icons.explore,
+                                    titleKey: 'explore_nearby',
+                                    isLarge: true,
+                                    onTap: () {
+                                      context.push(AppRouter.explore);
+                                    },
+                                  ),
+                                ),
+                                SizedBox(width: 16.w),
+                                // Medium tile - Heritage
+                                Expanded(
+                                  flex: 1,
+                                  child: CategoryTile(
+                                    icon: Icons.mosque,
+                                    titleKey: 'heritage_culture',
+                                    onTap: () {
+                                      context.push(AppRouter.explore);
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 16.h),
+
+                          // Row 2 - Three Equal Tiles
+                          Expanded(
+                            flex: 1,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: CategoryTile(
+                                    icon: Icons.restaurant,
+                                    titleKey: 'food_restaurants',
+                                    onTap: () {
+                                      context.push(AppRouter.explore);
+                                    },
+                                  ),
+                                ),
+                                SizedBox(width: 16.w),
+                                Expanded(
+                                  child: CategoryTile(
+                                    icon: Icons.event,
+                                    titleKey: 'events_mice',
+                                    onTap: () {
+                                      context.push(AppRouter.events);
+                                    },
+                                  ),
+                                ),
+                                SizedBox(width: 16.w),
+                                Expanded(
+                                  child: CategoryTile(
+                                    icon: Icons.directions_bus,
+                                    titleKey: 'transport_directions',
+                                    onTap: () {
+                                      _showComingSoonDialog(context);
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 16.h),
+
+                          // Row 3 - Single Full Width Emergency
+                          Expanded(
+                            flex: 1,
+                            child: CategoryTile(
+                              icon: Icons.help_outline,
+                              titleKey: 'emergency_support',
+                              isEmergency: true,
+                              onTap: () {
+                                _showEmergencyDialog(context);
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
-      ),
-
-      // Glass Floating Voice Assistant Button
-      floatingActionButton: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                _showComingSoonDialog(context);
-              },
-              borderRadius: BorderRadius.circular(30),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                decoration: BoxDecoration(
-                  color: AppTheme.beigeAccent.withOpacity(0.95),
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.3),
-                    width: 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryGreen.withOpacity(0.2),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.mic, size: 28, color: AppTheme.primaryGreen),
-                    const SizedBox(width: 12),
-                    LocaleText(
-                      'voice_assistant',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: AppTheme.primaryGreen,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
+              ],
             ),
           ),
-        ),
+        ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
