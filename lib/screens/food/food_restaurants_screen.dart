@@ -8,17 +8,16 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/attraction_card.dart';
 import '../../providers/attractions_provider.dart';
-import '../../router/app_router.dart';
 import '../../models/attraction.dart';
 
-class ExploreScreen extends ConsumerStatefulWidget {
-  const ExploreScreen({super.key});
+class FoodRestaurantsScreen extends ConsumerStatefulWidget {
+  const FoodRestaurantsScreen({super.key});
 
   @override
-  ConsumerState<ExploreScreen> createState() => _ExploreScreenState();
+  ConsumerState<FoodRestaurantsScreen> createState() => _FoodRestaurantsScreenState();
 }
 
-class _ExploreScreenState extends ConsumerState<ExploreScreen> {
+class _FoodRestaurantsScreenState extends ConsumerState<FoodRestaurantsScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<Attraction> _filteredAttractions = [];
   bool _isSearching = false;
@@ -40,11 +39,12 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     setState(() {
       _isSearching = _searchController.text.isNotEmpty;
       if (_isSearching) {
-        final attractions = ref.read(attractionsProvider);
+        final allAttractions = ref.read(attractionsProvider);
+        final foodAttractions = allAttractions.where((a) => a.category == 'food').toList();
         final query = _searchController.text.toLowerCase();
         final isArabic = Locales.currentLocale(context)?.languageCode == 'ar';
 
-        _filteredAttractions = attractions.where((attraction) {
+        _filteredAttractions = foodAttractions.where((attraction) {
           final name = isArabic ? attraction.nameAr.toLowerCase() : attraction.name.toLowerCase();
           final description = isArabic ? attraction.descriptionAr.toLowerCase() : attraction.description.toLowerCase();
           return name.contains(query) || description.contains(query);
@@ -228,7 +228,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   @override
   Widget build(BuildContext context) {
     final allAttractions = ref.watch(attractionsProvider);
-    final attractions = _isSearching ? _filteredAttractions : allAttractions;
+    final foodAttractions = allAttractions.where((a) => a.category == 'food').toList();
+    final attractions = _isSearching ? _filteredAttractions : foodAttractions;
     final isArabic = Locales.currentLocale(context)?.languageCode == 'ar';
 
     return Scaffold(
@@ -237,7 +238,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
           // Background image
           Positioned.fill(
             child: Image.asset(
-              'assets/images/desset.jpg',
+              'assets/images/riyadh.jpg',
               fit: BoxFit.cover,
             ),
           ),
@@ -308,7 +309,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 ),
                 flexibleSpace: FlexibleSpaceBar(
                   title: Text(
-                    'Explore Nearby',
+                    'Food & Restaurants',
                     style: TextStyle(
                       fontSize: 24.sp,
                       fontWeight: FontWeight.w900,
@@ -374,7 +375,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                             fontWeight: FontWeight.w600,
                           ),
                           decoration: InputDecoration(
-                            hintText: 'Search attractions...',
+                            hintText: 'Search restaurants...',
                             hintStyle: TextStyle(
                               fontSize: 18.sp,
                               color: AppTheme.beigeAccent.withOpacity(0.7),
@@ -446,13 +447,13 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.explore_off_rounded,
+                                  Icons.restaurant_outlined,
                                   size: 120.sp,
                                   color: AppTheme.beigeAccent.withOpacity(0.5),
                                 ),
                                 SizedBox(height: 24.h),
                                 Text(
-                                  'No Attractions Available',
+                                  'No Restaurants Available',
                                   style: TextStyle(
                                     fontSize: 32.sp,
                                     fontWeight: FontWeight.w900,
@@ -469,7 +470,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                                 ),
                                 SizedBox(height: 12.h),
                                 Text(
-                                  'Check back later for exciting places to explore',
+                                  'Check back later for dining options',
                                   style: TextStyle(
                                     fontSize: 18.sp,
                                     color: AppTheme.beigeAccent,
@@ -592,33 +593,6 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _MapMarker extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: AppTheme.primaryGreen,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 3),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryGreen.withOpacity(0.4),
-            blurRadius: 8,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: const Icon(
-        Icons.location_on,
-        color: Colors.white,
-        size: 24,
       ),
     );
   }

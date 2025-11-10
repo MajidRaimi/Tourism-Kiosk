@@ -71,19 +71,33 @@ class AttractionCard extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            child: Image.network(
-                              attraction.imageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Center(
-                                  child: Icon(
-                                    Icons.landscape,
-                                    size: 64.sp,
-                                    color: AppTheme.beigeAccent.withOpacity(0.5),
+                            child: attraction.imageUrl.startsWith('http')
+                                ? Image.network(
+                                    attraction.imageUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Center(
+                                        child: Icon(
+                                          Icons.landscape,
+                                          size: 64.sp,
+                                          color: AppTheme.beigeAccent.withOpacity(0.5),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Image.asset(
+                                    attraction.imageUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Center(
+                                        child: Icon(
+                                          Icons.landscape,
+                                          size: 64.sp,
+                                          color: AppTheme.beigeAccent.withOpacity(0.5),
+                                        ),
+                                      );
+                                    },
                                   ),
-                                );
-                              },
-                            ),
                           ),
                         ),
                         // Gradient overlay

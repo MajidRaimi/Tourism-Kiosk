@@ -7,6 +7,8 @@ import '../screens/explore/explore_screen.dart';
 import '../screens/details/attraction_details_screen.dart';
 import '../screens/events/events_screen.dart';
 import '../screens/accessibility/accessibility_screen.dart';
+import '../screens/heritage/heritage_culture_screen.dart';
+import '../screens/food/food_restaurants_screen.dart';
 import '../models/attraction.dart';
 
 class AppRouter {
@@ -17,6 +19,8 @@ class AppRouter {
   static const String attractionDetails = '/attraction-details';
   static const String events = '/events';
   static const String accessibility = '/accessibility';
+  static const String heritageCulture = '/heritage-culture';
+  static const String foodRestaurants = '/food-restaurants';
 
   static final GoRouter router = GoRouter(
     initialLocation: splash,
@@ -151,6 +155,46 @@ class AppRouter {
               child: SlideTransition(
                 position: Tween<Offset>(
                   begin: const Offset(0.0, 0.1),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+      GoRoute(
+        path: heritageCulture,
+        name: 'heritageCulture',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const HeritageCultureScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.1, 0.0),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+      GoRoute(
+        path: foodRestaurants,
+        name: 'foodRestaurants',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const FoodRestaurantsScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.1, 0.0),
                   end: Offset.zero,
                 ).animate(animation),
                 child: child,

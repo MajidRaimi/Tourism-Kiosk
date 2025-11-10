@@ -1,339 +1,596 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_locales/flutter_locales.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/event_card.dart';
-import '../../providers/events_provider.dart';
+import '../../widgets/attraction_card.dart';
+import '../../providers/attractions_provider.dart';
+import '../../models/attraction.dart';
 
-class EventsScreen extends ConsumerWidget {
+class EventsScreen extends ConsumerStatefulWidget {
   const EventsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final events = ref.watch(eventsProvider);
-    final isArabic = Locales.currentLocale(context)?.languageCode == 'ar';
+  ConsumerState<EventsScreen> createState() => _EventsScreenState();
+}
 
-    return Scaffold(
-      appBar: AppBar(
-        title: LocaleText('events_mice'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
-      ),
-      body: Column(
-        children: [
-          // Header Section
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppTheme.primaryGreen.withOpacity(0.1),
-                  AppTheme.secondaryGreen.withOpacity(0.05),
+class _EventsScreenState extends ConsumerState<EventsScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  List<Attraction> _filteredAttractions = [];
+  bool _isSearching = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _isSearching = _searchController.text.isNotEmpty;
+      if (_isSearching) {
+        final allAttractions = ref.read(attractionsProvider);
+        final eventAttractions = allAttractions.where((a) => a.category == 'events').toList();
+        final query = _searchController.text.toLowerCase();
+        final isArabic = Locales.currentLocale(context)?.languageCode == 'ar';
+
+        _filteredAttractions = eventAttractions.where((attraction) {
+          final name = isArabic ? attraction.nameAr.toLowerCase() : attraction.name.toLowerCase();
+          final description = isArabic ? attraction.descriptionAr.toLowerCase() : attraction.description.toLowerCase();
+          return name.contains(query) || description.contains(query);
+        }).toList();
+      }
+    });
+  }
+
+  void _showQRCodeDialog(BuildContext context, String attractionName, String qrData) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.7),
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(32.r),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(0.2),
+                    Colors.white.withOpacity(0.1),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(32.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 30,
+                    offset: const Offset(0, 15),
+                    spreadRadius: -5,
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.all(48.w),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Scan QR Code',
+                    style: TextStyle(
+                      fontSize: 32.sp,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.whiteText,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withOpacity(0.3),
+                          offset: const Offset(0, 2),
+                          blurRadius: 6,
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+                  Text(
+                    attractionName,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 20.sp,
+                      color: AppTheme.beigeAccent,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 32.h),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(24.r),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Container(
+                        padding: EdgeInsets.all(24.w),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withOpacity(0.95),
+                              Colors.white.withOpacity(0.9),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(24.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                              spreadRadius: -5,
+                            ),
+                          ],
+                        ),
+                        child: Container(
+                          padding: EdgeInsets.all(16.w),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                AppTheme.beigeAccent.withOpacity(0.15),
+                                AppTheme.beigeAccent.withOpacity(0.05),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(16.r),
+                          ),
+                          child: QrImageView(
+                            data: qrData,
+                            version: QrVersions.auto,
+                            size: 250.sp,
+                            backgroundColor: Colors.transparent,
+                            eyeStyle: QrEyeStyle(
+                              eyeShape: QrEyeShape.square,
+                              color: AppTheme.primaryGreen,
+                            ),
+                            dataModuleStyle: QrDataModuleStyle(
+                              dataModuleShape: QrDataModuleShape.square,
+                              color: AppTheme.primaryGreen,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 32.h),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20.r),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => Navigator.pop(context),
+                          borderRadius: BorderRadius.circular(20.r),
+                          splashColor: AppTheme.lightGreen.withOpacity(0.3),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  AppTheme.primaryGreen.withOpacity(0.8),
+                                  AppTheme.primaryGreen.withOpacity(0.6),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(20.r),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 64.w,
+                              vertical: 20.h,
+                            ),
+                            child: Text(
+                              'Close',
+                              style: TextStyle(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w900,
+                                color: AppTheme.whiteText,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final allAttractions = ref.watch(attractionsProvider);
+    final eventAttractions = allAttractions.where((a) => a.category == 'events').toList();
+    final attractions = _isSearching ? _filteredAttractions : eventAttractions;
+    final isArabic = Locales.currentLocale(context)?.languageCode == 'ar';
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Background image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/desset.jpg',
+              fit: BoxFit.cover,
+            ),
+          ),
+          // Primary color overlay
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppTheme.primaryGreen.withOpacity(0.85),
+              ),
+            ),
+          ),
+          // Sliver Content
+          CustomScrollView(
+            slivers: [
+              // Sliver App Bar
+              SliverAppBar(
+                expandedHeight: 200.h,
+                floating: false,
+                pinned: true,
+                backgroundColor: Colors.transparent,
+                automaticallyImplyLeading: false,
+                leadingWidth: 120.w,
+                leading: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.beigeAccent.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.event_available,
-                        color: AppTheme.primaryGreen,
-                        size: 32,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          LocaleText(
-                            'events',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.primaryGreen,
+                    SizedBox(width: 48.w),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(20.r),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => context.pop(),
+                            borderRadius: BorderRadius.circular(20.r),
+                            splashColor: AppTheme.lightGreen.withOpacity(0.3),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Colors.white.withOpacity(0.2),
+                                    Colors.white.withOpacity(0.1),
+                                  ],
                                 ),
+                                borderRadius: BorderRadius.circular(20.r),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 10),
+                                    spreadRadius: -5,
+                                  ),
+                                ],
+                              ),
+                              padding: EdgeInsets.all(16.w),
+                              child: Icon(
+                                Icons.chevron_left,
+                                color: AppTheme.whiteText,
+                                size: 32.sp,
+                              ),
+                            ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${events.length} ${isArabic ? 'فعالية' : 'Upcoming Events'}',
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-
-          // Events List
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: events.length,
-              itemBuilder: (context, index) {
-                final event = events[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: EventCard(
-                    event: event,
-                    isArabic: isArabic,
-                    onTap: () {
-                      _showEventDetailsDialog(context, event, isArabic);
-                    },
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showEventDetailsDialog(
-      BuildContext context, dynamic event, bool isArabic) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 600, maxHeight: 700),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Event Image
-              ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(24)),
-                child: Container(
-                  height: 200,
-                  width: double.infinity,
-                  color: AppTheme.primaryGreen.withOpacity(0.1),
-                  child: Image.network(
-                    event.imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Center(
-                        child: Icon(
-                          Icons.event,
-                          size: 80,
-                          color: AppTheme.primaryGreen.withOpacity(0.3),
+                flexibleSpace: FlexibleSpaceBar(
+                  title: Text(
+                    'Events & MICE',
+                    style: TextStyle(
+                      fontSize: 24.sp,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.whiteText,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withOpacity(0.4),
+                          offset: const Offset(0, 2),
+                          blurRadius: 8,
                         ),
-                      );
-                    },
+                      ],
+                    ),
                   ),
-                ),
-              ),
-
-              // Content
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title
-                      Text(
-                        isArabic ? event.nameAr : event.name,
-                        style:
-                            Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.primaryGreen,
-                                ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Date
-                      _EventInfoRow(
-                        icon: Icons.calendar_today,
-                        label: event.dateRange,
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Venue
-                      _EventInfoRow(
-                        icon: Icons.location_on,
-                        label: isArabic ? event.venueAr : event.venue,
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Category
-                      _EventInfoRow(
-                        icon: Icons.category,
-                        label: event.category.toUpperCase(),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Description
-                      Text(
-                        isArabic ? event.descriptionAr : event.description,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              height: 1.5,
-                            ),
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      // Action Buttons
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () {
-                                _showFeatureDialog(context, 'venue_map');
-                              },
-                              icon: const Icon(Icons.map),
-                              label: LocaleText('venue_map'),
-                              style: OutlinedButton.styleFrom(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                _showFeatureDialog(context, 'schedule');
-                              },
-                              icon: const Icon(Icons.schedule),
-                              label: LocaleText('schedule'),
-                              style: ElevatedButton.styleFrom(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
-                              ),
-                            ),
-                          ),
+                  centerTitle: true,
+                  background: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          AppTheme.primaryGreen.withOpacity(0.3),
                         ],
                       ),
-
-                      const SizedBox(height: 12),
-
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            _showFeatureDialog(context, 'shuttle_info');
-                          },
-                          icon: const Icon(Icons.directions_bus),
-                          label: LocaleText('shuttle_info'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Close Button
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: LocaleText(
-                      'back',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: AppTheme.primaryGreen,
-                          ),
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
-  void _showFeatureDialog(BuildContext context, String featureKey) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: Row(
-          children: [
-            const Icon(Icons.info_outline, color: AppTheme.primaryGreen),
-            const SizedBox(width: 12),
-            LocaleText(featureKey),
-          ],
-        ),
-        content: const Text('This feature will display detailed information.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EventInfoRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _EventInfoRow({
-    required this.icon,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.primaryGreen.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 20,
-            color: AppTheme.primaryGreen,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                color: AppTheme.darkGray,
+              // Search Bar
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 48.w, vertical: 24.h),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24.r),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withOpacity(0.2),
+                              Colors.white.withOpacity(0.1),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(24.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                              spreadRadius: -5,
+                            ),
+                          ],
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            color: AppTheme.whiteText,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Search events...',
+                            hintStyle: TextStyle(
+                              fontSize: 18.sp,
+                              color: AppTheme.beigeAccent.withOpacity(0.7),
+                              fontWeight: FontWeight.w600,
+                            ),
+                            prefixIcon: Icon(
+                              Icons.search_rounded,
+                              color: AppTheme.beigeAccent,
+                              size: 28.sp,
+                            ),
+                            suffixIcon: _searchController.text.isNotEmpty
+                                ? IconButton(
+                                    icon: Icon(
+                                      Icons.clear_rounded,
+                                      color: AppTheme.beigeAccent,
+                                      size: 24.sp,
+                                    ),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                    },
+                                  )
+                                : null,
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 24.w,
+                              vertical: 20.h,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            ),
+
+              // Attractions Grid or Empty State
+              if (attractions.isEmpty && !_isSearching)
+                // Empty State - No attractions at all
+                SliverFillRemaining(
+                  child: Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(48.w),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(32.r),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.white.withOpacity(0.2),
+                                  Colors.white.withOpacity(0.1),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(32.r),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                  spreadRadius: -5,
+                                ),
+                              ],
+                            ),
+                            padding: EdgeInsets.all(48.w),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.event_outlined,
+                                  size: 120.sp,
+                                  color: AppTheme.beigeAccent.withOpacity(0.5),
+                                ),
+                                SizedBox(height: 24.h),
+                                Text(
+                                  'No Events Available',
+                                  style: TextStyle(
+                                    fontSize: 32.sp,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppTheme.whiteText,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black.withOpacity(0.3),
+                                        offset: const Offset(0, 2),
+                                        blurRadius: 6,
+                                      ),
+                                    ],
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: 12.h),
+                                Text(
+                                  'Check back later for upcoming events',
+                                  style: TextStyle(
+                                    fontSize: 18.sp,
+                                    color: AppTheme.beigeAccent,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              else if (attractions.isEmpty && _isSearching)
+                // No Results State - Search returned nothing
+                SliverFillRemaining(
+                  child: Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(48.w),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(32.r),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.white.withOpacity(0.2),
+                                  Colors.white.withOpacity(0.1),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(32.r),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                  spreadRadius: -5,
+                                ),
+                              ],
+                            ),
+                            padding: EdgeInsets.all(48.w),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.search_off_rounded,
+                                  size: 120.sp,
+                                  color: AppTheme.beigeAccent.withOpacity(0.5),
+                                ),
+                                SizedBox(height: 24.h),
+                                Text(
+                                  'No Results Found',
+                                  style: TextStyle(
+                                    fontSize: 32.sp,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppTheme.whiteText,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black.withOpacity(0.3),
+                                        offset: const Offset(0, 2),
+                                        blurRadius: 6,
+                                      ),
+                                    ],
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: 12.h),
+                                Text(
+                                  'Try searching with different keywords',
+                                  style: TextStyle(
+                                    fontSize: 18.sp,
+                                    color: AppTheme.beigeAccent,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                // Attractions Grid
+                SliverPadding(
+                  padding: EdgeInsets.symmetric(horizontal: 48.w, vertical: 24.h),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 16.w,
+                      mainAxisSpacing: 16.h,
+                      childAspectRatio: 0.75,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final attraction = attractions[index];
+                        return AttractionCard(
+                          attraction: attraction,
+                          isArabic: isArabic,
+                          onTap: () {
+                            _showQRCodeDialog(
+                              context,
+                              isArabic ? attraction.nameAr : attraction.name,
+                              'https://maps.google.com/?q=${attraction.name}',
+                            );
+                          },
+                        );
+                      },
+                      childCount: attractions.length,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ],
       ),

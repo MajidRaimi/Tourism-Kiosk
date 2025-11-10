@@ -7,7 +7,7 @@ import '../theme/app_theme.dart';
 class CategoryTile extends StatelessWidget {
   final IconData icon;
   final String titleKey;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final Color? backgroundColor;
   final bool isLarge;
   final bool isEmergency;
@@ -16,7 +16,7 @@ class CategoryTile extends StatelessWidget {
     super.key,
     required this.icon,
     required this.titleKey,
-    required this.onTap,
+    this.onTap,
     this.backgroundColor,
     this.isLarge = false,
     this.isEmergency = false,

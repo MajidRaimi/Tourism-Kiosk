@@ -182,7 +182,7 @@ class HomeScreen extends ConsumerWidget {
                                     icon: Icons.mosque,
                                     titleKey: 'heritage_culture',
                                     onTap: () {
-                                      context.push(AppRouter.explore);
+                                      context.push(AppRouter.heritageCulture);
                                     },
                                   ),
                                 ),
@@ -201,7 +201,7 @@ class HomeScreen extends ConsumerWidget {
                                     icon: Icons.restaurant,
                                     titleKey: 'food_restaurants',
                                     onTap: () {
-                                      context.push(AppRouter.explore);
+                                      context.push(AppRouter.foodRestaurants);
                                     },
                                   ),
                                 ),
@@ -217,12 +217,13 @@ class HomeScreen extends ConsumerWidget {
                                 ),
                                 SizedBox(width: 16.w),
                                 Expanded(
-                                  child: CategoryTile(
-                                    icon: Icons.directions_bus,
-                                    titleKey: 'transport_directions',
-                                    onTap: () {
-                                      _showComingSoonDialog(context);
-                                    },
+                                  child: Opacity(
+                                    opacity: 0.5,
+                                    child: CategoryTile(
+                                      icon: Icons.directions_bus,
+                                      titleKey: 'transport_directions',
+                                      onTap: null,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -305,47 +306,128 @@ class HomeScreen extends ConsumerWidget {
   void _showEmergencyDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        backgroundColor: Colors.red.shade50,
-        title: const Row(
-          children: [
-            Icon(Icons.emergency, color: Colors.red),
-            SizedBox(width: 12),
-            Text('Emergency Contacts'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _EmergencyContact(
-              icon: Icons.local_police,
-              label: 'Police',
-              number: '999',
+      barrierColor: Colors.black.withOpacity(0.7),
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(32.r),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.red.withOpacity(0.3),
+                    Colors.red.shade900.withOpacity(0.2),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(32.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.red.withOpacity(0.4),
+                    blurRadius: 30,
+                    offset: const Offset(0, 15),
+                    spreadRadius: -5,
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.all(48.w),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.emergency_rounded,
+                    size: 80.sp,
+                    color: Colors.red.shade100,
+                  ),
+                  SizedBox(height: 24.h),
+                  Text(
+                    'Emergency Contacts',
+                    style: TextStyle(
+                      fontSize: 32.sp,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.whiteText,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withOpacity(0.3),
+                          offset: const Offset(0, 2),
+                          blurRadius: 6,
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 32.h),
+                  _EmergencyContact(
+                    icon: Icons.local_police_rounded,
+                    label: 'Police',
+                    number: '999',
+                  ),
+                  SizedBox(height: 16.h),
+                  _EmergencyContact(
+                    icon: Icons.local_hospital_rounded,
+                    label: 'Ambulance',
+                    number: '997',
+                  ),
+                  SizedBox(height: 16.h),
+                  _EmergencyContact(
+                    icon: Icons.fire_extinguisher_rounded,
+                    label: 'Fire Department',
+                    number: '998',
+                  ),
+                  SizedBox(height: 32.h),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20.r),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => Navigator.pop(context),
+                          borderRadius: BorderRadius.circular(20.r),
+                          splashColor: Colors.red.withOpacity(0.3),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.red.withOpacity(0.8),
+                                  Colors.red.shade900.withOpacity(0.6),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(20.r),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 64.w,
+                              vertical: 20.h,
+                            ),
+                            child: Text(
+                              'Close',
+                              style: TextStyle(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w900,
+                                color: AppTheme.whiteText,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            _EmergencyContact(
-              icon: Icons.local_hospital,
-              label: 'Ambulance',
-              number: '997',
-            ),
-            const SizedBox(height: 12),
-            _EmergencyContact(
-              icon: Icons.fire_extinguisher,
-              label: 'Fire Department',
-              number: '998',
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -364,32 +446,73 @@ class _EmergencyContact extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.shade200),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.red),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20.r),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: EdgeInsets.all(20.w),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.2),
+                Colors.white.withOpacity(0.1),
+              ],
             ),
+            borderRadius: BorderRadius.circular(20.r),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
-          Text(
-            number,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.red,
-            ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.red.shade100,
+                  size: 28.sp,
+                ),
+              ),
+              SizedBox(width: 16.w),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.whiteText,
+                  ),
+                ),
+              ),
+              Text(
+                number,
+                style: TextStyle(
+                  fontSize: 24.sp,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.red.shade100,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withOpacity(0.3),
+                      offset: const Offset(0, 2),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
