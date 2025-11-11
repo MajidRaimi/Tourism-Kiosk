@@ -39,16 +39,17 @@ class _HeritageCultureScreenState extends ConsumerState<HeritageCultureScreen> {
     setState(() {
       _isSearching = _searchController.text.isNotEmpty;
       if (_isSearching) {
-        final allAttractions = ref.read(attractionsProvider);
-        final heritageAttractions = allAttractions.where((a) => a.category == 'heritage').toList();
-        final query = _searchController.text.toLowerCase();
-        final isArabic = Locales.currentLocale(context)?.languageCode == 'ar';
+        ref.read(attractionsProvider).whenData((attractions) {
+          final heritageAttractions = attractions.where((a) => a.category == 'heritage').toList();
+          final query = _searchController.text.toLowerCase();
+          final isArabic = Locales.currentLocale(context)?.languageCode == 'ar';
 
-        _filteredAttractions = heritageAttractions.where((attraction) {
-          final name = isArabic ? attraction.nameAr.toLowerCase() : attraction.name.toLowerCase();
-          final description = isArabic ? attraction.descriptionAr.toLowerCase() : attraction.description.toLowerCase();
-          return name.contains(query) || description.contains(query);
-        }).toList();
+          _filteredAttractions = heritageAttractions.where((attraction) {
+            final name = isArabic ? attraction.nameAr.toLowerCase() : attraction.name.toLowerCase();
+            final description = isArabic ? attraction.descriptionAr.toLowerCase() : attraction.description.toLowerCase();
+            return name.contains(query) || description.contains(query);
+          }).toList();
+        });
       }
     });
   }
@@ -227,9 +228,7 @@ class _HeritageCultureScreenState extends ConsumerState<HeritageCultureScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final allAttractions = ref.watch(attractionsProvider);
-    final heritageAttractions = allAttractions.where((a) => a.category == 'heritage').toList();
-    final attractions = _isSearching ? _filteredAttractions : heritageAttractions;
+    final attractionsAsync = ref.watch(attractionsProvider);
     final isArabic = Locales.currentLocale(context)?.languageCode == 'ar';
 
     return Scaffold(
@@ -412,184 +411,210 @@ class _HeritageCultureScreenState extends ConsumerState<HeritageCultureScreen> {
               ),
 
               // Attractions Grid or Empty State
-              if (attractions.isEmpty && !_isSearching)
-                // Empty State - No attractions at all
-                SliverFillRemaining(
+              attractionsAsync.when(
+                loading: () => SliverFillRemaining(
                   child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(48.w),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(32.r),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withOpacity(0.2),
-                                  Colors.white.withOpacity(0.1),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(32.r),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 10),
-                                  spreadRadius: -5,
-                                ),
-                              ],
-                            ),
-                            padding: EdgeInsets.all(48.w),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.museum_outlined,
-                                  size: 120.sp,
-                                  color: AppTheme.beigeAccent.withOpacity(0.5),
-                                ),
-                                SizedBox(height: 24.h),
-                                Text(
-                                  'No Heritage Sites Available',
-                                  style: TextStyle(
-                                    fontSize: 32.sp,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppTheme.whiteText,
-                                    shadows: [
-                                      Shadow(
-                                        color: Colors.black.withOpacity(0.3),
-                                        offset: const Offset(0, 2),
-                                        blurRadius: 6,
-                                      ),
-                                    ],
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                SizedBox(height: 12.h),
-                                Text(
-                                  'Check back later for cultural experiences',
-                                  style: TextStyle(
-                                    fontSize: 18.sp,
-                                    color: AppTheme.beigeAccent,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-              else if (attractions.isEmpty && _isSearching)
-                // No Results State - Search returned nothing
-                SliverFillRemaining(
-                  child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(48.w),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(32.r),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withOpacity(0.2),
-                                  Colors.white.withOpacity(0.1),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(32.r),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 10),
-                                  spreadRadius: -5,
-                                ),
-                              ],
-                            ),
-                            padding: EdgeInsets.all(48.w),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.search_off_rounded,
-                                  size: 120.sp,
-                                  color: AppTheme.beigeAccent.withOpacity(0.5),
-                                ),
-                                SizedBox(height: 24.h),
-                                Text(
-                                  'No Results Found',
-                                  style: TextStyle(
-                                    fontSize: 32.sp,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppTheme.whiteText,
-                                    shadows: [
-                                      Shadow(
-                                        color: Colors.black.withOpacity(0.3),
-                                        offset: const Offset(0, 2),
-                                        blurRadius: 6,
-                                      ),
-                                    ],
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                SizedBox(height: 12.h),
-                                Text(
-                                  'Try searching with different keywords',
-                                  style: TextStyle(
-                                    fontSize: 18.sp,
-                                    color: AppTheme.beigeAccent,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-              else
-                // Attractions Grid
-                SliverPadding(
-                  padding: EdgeInsets.symmetric(horizontal: 48.w, vertical: 24.h),
-                  sliver: SliverGrid(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 16.w,
-                      mainAxisSpacing: 16.h,
-                      childAspectRatio: 0.75,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final attraction = attractions[index];
-                        return AttractionCard(
-                          attraction: attraction,
-                          isArabic: isArabic,
-                          onTap: () {
-                            _showQRCodeDialog(
-                              context,
-                              isArabic ? attraction.nameAr : attraction.name,
-                              'https://maps.google.com/?q=${attraction.name}',
-                            );
-                          },
-                        );
-                      },
-                      childCount: attractions.length,
+                    child: CircularProgressIndicator(
+                      color: AppTheme.beigeAccent,
                     ),
                   ),
                 ),
+                error: (error, stack) => SliverFillRemaining(
+                  child: Center(
+                    child: Text(
+                      'Error loading attractions',
+                      style: TextStyle(
+                        color: AppTheme.whiteText,
+                        fontSize: 18.sp,
+                      ),
+                    ),
+                  ),
+                ),
+                data: (allAttractions) {
+                  final heritageAttractions = allAttractions.where((a) => a.category == 'heritage').toList();
+                  final attractions = _isSearching ? _filteredAttractions : heritageAttractions;
+
+                  if (attractions.isEmpty && !_isSearching) {
+                    // Empty State - No attractions at all
+                    return SliverFillRemaining(
+                      child: Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(48.w),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(32.r),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Colors.white.withOpacity(0.2),
+                                      Colors.white.withOpacity(0.1),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(32.r),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 10),
+                                      spreadRadius: -5,
+                                    ),
+                                  ],
+                                ),
+                                padding: EdgeInsets.all(48.w),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.museum_outlined,
+                                      size: 120.sp,
+                                      color: AppTheme.beigeAccent.withOpacity(0.5),
+                                    ),
+                                    SizedBox(height: 24.h),
+                                    Text(
+                                      'No Heritage Sites Available',
+                                      style: TextStyle(
+                                        fontSize: 32.sp,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppTheme.whiteText,
+                                        shadows: [
+                                          Shadow(
+                                            color: Colors.black.withOpacity(0.3),
+                                            offset: const Offset(0, 2),
+                                            blurRadius: 6,
+                                          ),
+                                        ],
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    SizedBox(height: 12.h),
+                                    Text(
+                                      'Check back later for cultural experiences',
+                                      style: TextStyle(
+                                        fontSize: 18.sp,
+                                        color: AppTheme.beigeAccent,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  } else if (attractions.isEmpty && _isSearching) {
+                    // No Results State - Search returned nothing
+                    return SliverFillRemaining(
+                      child: Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(48.w),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(32.r),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Colors.white.withOpacity(0.2),
+                                      Colors.white.withOpacity(0.1),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(32.r),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 10),
+                                      spreadRadius: -5,
+                                    ),
+                                  ],
+                                ),
+                                padding: EdgeInsets.all(48.w),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.search_off_rounded,
+                                      size: 120.sp,
+                                      color: AppTheme.beigeAccent.withOpacity(0.5),
+                                    ),
+                                    SizedBox(height: 24.h),
+                                    Text(
+                                      'No Results Found',
+                                      style: TextStyle(
+                                        fontSize: 32.sp,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppTheme.whiteText,
+                                        shadows: [
+                                          Shadow(
+                                            color: Colors.black.withOpacity(0.3),
+                                            offset: const Offset(0, 2),
+                                            blurRadius: 6,
+                                          ),
+                                        ],
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    SizedBox(height: 12.h),
+                                    Text(
+                                      'Try searching with different keywords',
+                                      style: TextStyle(
+                                        fontSize: 18.sp,
+                                        color: AppTheme.beigeAccent,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  } else {
+                    // Attractions Grid
+                    return SliverPadding(
+                      padding: EdgeInsets.symmetric(horizontal: 48.w, vertical: 24.h),
+                      sliver: SliverGrid(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 16.w,
+                          mainAxisSpacing: 16.h,
+                          childAspectRatio: 0.75,
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final attraction = attractions[index];
+                            return AttractionCard(
+                              attraction: attraction,
+                              isArabic: isArabic,
+                              onTap: () {
+                                _showQRCodeDialog(
+                                  context,
+                                  isArabic ? attraction.nameAr : attraction.name,
+                                  'https://maps.google.com/?q=${attraction.name}',
+                                );
+                              },
+                            );
+                          },
+                          childCount: attractions.length,
+                        ),
+                      ),
+                    );
+                  }
+                },
+              ),
             ],
           ),
         ],

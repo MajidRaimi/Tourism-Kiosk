@@ -48,4 +48,20 @@ class LocationService {
     }
     return 'Saudi Arabia';
   }
+
+  /// Calculate distance between two points in kilometers
+  static double calculateDistance({
+    required double startLat,
+    required double startLon,
+    required double endLat,
+    required double endLon,
+  }) {
+    final distanceInMeters = Geolocator.distanceBetween(
+      startLat,
+      startLon,
+      endLat,
+      endLon,
+    );
+    return distanceInMeters / 1000; // Convert to kilometers
+  }
 }

@@ -1,7 +1,8 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_locales/flutter_locales.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import '../models/attraction.dart';
 import '../theme/app_theme.dart';
 
@@ -80,7 +81,8 @@ class AttractionCard extends StatelessWidget {
                                         child: Icon(
                                           Icons.landscape,
                                           size: 64.sp,
-                                          color: AppTheme.beigeAccent.withOpacity(0.5),
+                                          color: AppTheme.beigeAccent
+                                              .withOpacity(0.5),
                                         ),
                                       );
                                     },
@@ -93,7 +95,8 @@ class AttractionCard extends StatelessWidget {
                                         child: Icon(
                                           Icons.landscape,
                                           size: 64.sp,
-                                          color: AppTheme.beigeAccent.withOpacity(0.5),
+                                          color: AppTheme.beigeAccent
+                                              .withOpacity(0.5),
                                         ),
                                       );
                                     },
@@ -202,7 +205,7 @@ class AttractionCard extends StatelessWidget {
                               ),
                               SizedBox(width: 6.w),
                               Text(
-                                '${attraction.distance} km',
+                                '${attraction.distance.toStringAsFixed(1)} km',
                                 style: TextStyle(
                                   fontSize: 15.sp,
                                   color: AppTheme.beigeAccent,

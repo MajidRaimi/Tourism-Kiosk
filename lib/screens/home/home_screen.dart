@@ -1,15 +1,15 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_locales/flutter_locales.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../providers/location_provider.dart';
+import '../../router/app_router.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/category_tile.dart';
-import '../../widgets/glass_container.dart';
-import '../../router/app_router.dart';
-import '../../providers/location_provider.dart';
-import '../../services/prayer_time_service.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -26,10 +26,7 @@ class HomeScreen extends ConsumerWidget {
         children: [
           // Background image
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/desset.jpg',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/images/desset.jpg', fit: BoxFit.cover),
           ),
           // Primary color overlay
           Positioned.fill(
@@ -68,188 +65,200 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
 
-            SafeArea(
-              child: Padding(
-                padding: EdgeInsets.all(48.w),
-                child: Column(
-                  children: [
-                    // Back Button
-                    Row(
+                SafeArea(
+                  child: Padding(
+                    padding: EdgeInsets.all(48.w),
+                    child: Column(
                       children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(20.r),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () => Navigator.of(context).pop(),
-                                borderRadius: BorderRadius.circular(20.r),
-                                splashColor: AppTheme.lightGreen.withOpacity(0.3),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        Colors.white.withOpacity(0.2),
-                                        Colors.white.withOpacity(0.1),
-                                      ],
-                                    ),
+                        // Back Button
+                        Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(20.r),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(
+                                  sigmaX: 20,
+                                  sigmaY: 20,
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () => context.go(AppRouter.splash),
                                     borderRadius: BorderRadius.circular(20.r),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.2),
-                                        blurRadius: 20,
-                                        offset: const Offset(0, 10),
-                                        spreadRadius: -5,
+                                    splashColor: AppTheme.lightGreen
+                                        .withOpacity(0.3),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            Colors.white.withOpacity(0.2),
+                                            Colors.white.withOpacity(0.1),
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          20.r,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(
+                                              0.2,
+                                            ),
+                                            blurRadius: 20,
+                                            offset: const Offset(0, 10),
+                                            spreadRadius: -5,
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                  padding: EdgeInsets.all(16.w),
-                                  child: Icon(
-                                    Icons.chevron_left,
-                                    color: AppTheme.whiteText,
-                                    size: 32.sp,
+                                      padding: EdgeInsets.all(16.w),
+                                      child: Icon(
+                                        Icons.chevron_left,
+                                        color: AppTheme.whiteText,
+                                        size: 32.sp,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
+                          ],
+                        ),
+
+                        SizedBox(height: 40.h),
+
+                        // Title
+                        LocaleText(
+                          'home',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 48.sp,
+                            color: AppTheme.whiteText,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.2,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withOpacity(0.4),
+                                offset: const Offset(0, 3),
+                                blurRadius: 12,
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+                        Text(
+                          'Explore amazing places and experiences',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 20.sp,
+                            color: AppTheme.beigeAccent,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+
+                        SizedBox(height: 60.h),
+
+                        // Main Content - Asymmetric Bento Grid
+                        Expanded(
+                          child: Column(
+                            children: [
+                              // Row 1 - Large + Medium
+                              Expanded(
+                                flex: 2,
+                                child: Row(
+                                  children: [
+                                    // Large tile - Explore
+                                    Expanded(
+                                      flex: 2,
+                                      child: CategoryTile(
+                                        icon: Icons.explore,
+                                        titleKey: 'explore_nearby',
+                                        isLarge: true,
+                                        onTap: () {
+                                          context.push(AppRouter.explore);
+                                        },
+                                      ),
+                                    ),
+                                    SizedBox(width: 16.w),
+                                    // Medium tile - Heritage
+                                    Expanded(
+                                      flex: 1,
+                                      child: CategoryTile(
+                                        icon: Icons.mosque,
+                                        titleKey: 'heritage_culture',
+                                        onTap: () {
+                                          context.push(
+                                            AppRouter.heritageCulture,
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: 16.h),
+
+                              // Row 2 - Three Equal Tiles
+                              Expanded(
+                                flex: 1,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: CategoryTile(
+                                        icon: Icons.restaurant,
+                                        titleKey: 'food_restaurants',
+                                        onTap: () {
+                                          context.push(
+                                            AppRouter.foodRestaurants,
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    SizedBox(width: 16.w),
+                                    Expanded(
+                                      child: CategoryTile(
+                                        icon: Icons.event,
+                                        titleKey: 'events_mice',
+                                        onTap: () {
+                                          context.push(AppRouter.events);
+                                        },
+                                      ),
+                                    ),
+                                    SizedBox(width: 16.w),
+                                    Expanded(
+                                      child: Opacity(
+                                        opacity: 0.5,
+                                        child: CategoryTile(
+                                          icon: Icons.directions_bus,
+                                          titleKey: 'transport_directions',
+                                          onTap: null,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: 16.h),
+
+                              // Row 3 - Single Full Width Emergency
+                              Expanded(
+                                flex: 1,
+                                child: CategoryTile(
+                                  icon: Icons.help_outline,
+                                  titleKey: 'emergency_support',
+                                  isEmergency: true,
+                                  onTap: () {
+                                    _showEmergencyDialog(context);
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-
-                    SizedBox(height: 40.h),
-
-                    // Title
-                    LocaleText(
-                      'home',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 48.sp,
-                        color: AppTheme.whiteText,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.2,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withOpacity(0.4),
-                            offset: const Offset(0, 3),
-                            blurRadius: 12,
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 16.h),
-                    Text(
-                      'Explore amazing places and experiences',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20.sp,
-                        color: AppTheme.beigeAccent,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-
-                    SizedBox(height: 60.h),
-
-                    // Main Content - Asymmetric Bento Grid
-                    Expanded(
-                      child: Column(
-                        children: [
-                          // Row 1 - Large + Medium
-                          Expanded(
-                            flex: 2,
-                            child: Row(
-                              children: [
-                                // Large tile - Explore
-                                Expanded(
-                                  flex: 2,
-                                  child: CategoryTile(
-                                    icon: Icons.explore,
-                                    titleKey: 'explore_nearby',
-                                    isLarge: true,
-                                    onTap: () {
-                                      context.push(AppRouter.explore);
-                                    },
-                                  ),
-                                ),
-                                SizedBox(width: 16.w),
-                                // Medium tile - Heritage
-                                Expanded(
-                                  flex: 1,
-                                  child: CategoryTile(
-                                    icon: Icons.mosque,
-                                    titleKey: 'heritage_culture',
-                                    onTap: () {
-                                      context.push(AppRouter.heritageCulture);
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 16.h),
-
-                          // Row 2 - Three Equal Tiles
-                          Expanded(
-                            flex: 1,
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: CategoryTile(
-                                    icon: Icons.restaurant,
-                                    titleKey: 'food_restaurants',
-                                    onTap: () {
-                                      context.push(AppRouter.foodRestaurants);
-                                    },
-                                  ),
-                                ),
-                                SizedBox(width: 16.w),
-                                Expanded(
-                                  child: CategoryTile(
-                                    icon: Icons.event,
-                                    titleKey: 'events_mice',
-                                    onTap: () {
-                                      context.push(AppRouter.events);
-                                    },
-                                  ),
-                                ),
-                                SizedBox(width: 16.w),
-                                Expanded(
-                                  child: Opacity(
-                                    opacity: 0.5,
-                                    child: CategoryTile(
-                                      icon: Icons.directions_bus,
-                                      titleKey: 'transport_directions',
-                                      onTap: null,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 16.h),
-
-                          // Row 3 - Single Full Width Emergency
-                          Expanded(
-                            flex: 1,
-                            child: CategoryTile(
-                              icon: Icons.help_outline,
-                              titleKey: 'emergency_support',
-                              isEmergency: true,
-                              onTap: () {
-                                _showEmergencyDialog(context);
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
               ],
             ),
           ),
@@ -272,7 +281,7 @@ class HomeScreen extends ConsumerWidget {
       'Sep',
       'Oct',
       'Nov',
-      'Dec'
+      'Dec',
     ];
     return '${months[now.month - 1]} ${now.day}, ${now.year}';
   }
@@ -281,9 +290,7 @@ class HomeScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         backgroundColor: Colors.white,
         title: const Row(
           children: [
@@ -478,11 +485,7 @@ class _EmergencyContact extends StatelessWidget {
                   color: Colors.red.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
-                child: Icon(
-                  icon,
-                  color: Colors.red.shade100,
-                  size: 28.sp,
-                ),
+                child: Icon(icon, color: Colors.red.shade100, size: 28.sp),
               ),
               SizedBox(width: 16.w),
               Expanded(

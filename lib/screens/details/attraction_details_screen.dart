@@ -104,7 +104,7 @@ class AttractionDetailsScreen extends StatelessWidget {
                           children: [
                             _InfoChip(
                               icon: Icons.location_on,
-                              label: '${attraction.distance} km',
+                              label: '${attraction.distance.toStringAsFixed(1)} km',
                             ),
                             const SizedBox(width: 12),
                             _InfoChip(
