@@ -60,7 +60,7 @@ class EventCard extends StatelessWidget {
                           color: AppTheme.primaryGreen.withOpacity(0.1),
                           child: Image.network(
                             event.imageUrl,
-                            fit: BoxFit.cover,
+                            fit: BoxFit.fill,
                             errorBuilder: (context, error, stackTrace) {
                               return Center(
                                 child: Icon(

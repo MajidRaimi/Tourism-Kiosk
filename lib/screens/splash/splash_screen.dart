@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_locales/flutter_locales.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import '../../theme/app_theme.dart';
-import '../../router/app_router.dart';
-import '../../widgets/glass_container.dart';
+
 import '../../providers/location_provider.dart';
+import '../../router/app_router.dart';
 import '../../services/prayer_time_service.dart';
+import '../../theme/app_theme.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -105,6 +105,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final weatherAsync = ref.watch(weatherProvider);
+    final cityAsync = ref.watch(cityNameProvider);
+    final prayerAsync = ref.watch(nextPrayerProvider);
+
     return Scaffold(
       body: Stack(
         children: [
@@ -162,7 +166,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                               SizedBox(height: 40.h),
 
                               // Bento Grid Info Cards
-                              Container(
+                              SizedBox(
                                 height: 200.h,
                                 child: Row(
                                   children: [
@@ -227,15 +231,47 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                                                             size: 28.sp,
                                                           ),
                                                           SizedBox(width: 12.w),
-                                                          Text(
-                                                            'Riyadh, Saudi Arabia',
-                                                            style: TextStyle(
-                                                              fontSize: 18.sp,
-                                                              color: AppTheme
-                                                                  .whiteText,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
+                                                          Expanded(
+                                                            child: cityAsync.when(
+                                                              loading: () => Text(
+                                                                'Loading...',
+                                                                style: TextStyle(
+                                                                  fontSize:
+                                                                      18.sp,
+                                                                  color: AppTheme
+                                                                      .whiteText,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                ),
+                                                              ),
+                                                              error: (error, stack) => Text(
+                                                                'Riyadh, Saudi Arabia',
+                                                                style: TextStyle(
+                                                                  fontSize:
+                                                                      18.sp,
+                                                                  color: AppTheme
+                                                                      .whiteText,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                ),
+                                                              ),
+                                                              data: (city) => Text(
+                                                                city,
+                                                                style: TextStyle(
+                                                                  fontSize:
+                                                                      18.sp,
+                                                                  color: AppTheme
+                                                                      .whiteText,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                ),
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              ),
                                                             ),
                                                           ),
                                                         ],
@@ -333,54 +369,124 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                                                         ),
                                                   ),
                                                   padding: EdgeInsets.all(16.w),
-                                                  child: Column(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      Icon(
-                                                        Icons.wb_sunny,
-                                                        color: AppTheme
-                                                            .beigeAccent,
-                                                        size: 36.sp,
-                                                      ),
-                                                      SizedBox(height: 6.h),
-                                                      Text(
-                                                        '28°C',
-                                                        style: TextStyle(
-                                                          fontSize: 28.sp,
-                                                          color: AppTheme
-                                                              .whiteText,
-                                                          fontWeight:
-                                                              FontWeight.w900,
-                                                          shadows: [
-                                                            Shadow(
-                                                              color: Colors
-                                                                  .black
-                                                                  .withOpacity(
-                                                                    0.3,
-                                                                  ),
-                                                              offset:
-                                                                  const Offset(
-                                                                    0,
-                                                                    2,
-                                                                  ),
-                                                              blurRadius: 6,
+                                                  child: weatherAsync.when(
+                                                    loading: () => Column(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        SizedBox(
+                                                          width: 24.sp,
+                                                          height: 24.sp,
+                                                          child:
+                                                              CircularProgressIndicator(
+                                                                strokeWidth: 2,
+                                                                color: AppTheme
+                                                                    .beigeAccent,
+                                                              ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    error: (error, stack) =>
+                                                        Column(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .center,
+                                                          children: [
+                                                            Icon(
+                                                              Icons.wb_sunny,
+                                                              color: AppTheme
+                                                                  .beigeAccent,
+                                                              size: 36.sp,
+                                                            ),
+                                                            SizedBox(
+                                                              height: 6.h,
+                                                            ),
+                                                            Text(
+                                                              '28°C',
+                                                              style: TextStyle(
+                                                                fontSize: 28.sp,
+                                                                color: AppTheme
+                                                                    .whiteText,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w900,
+                                                              ),
                                                             ),
                                                           ],
                                                         ),
-                                                      ),
-                                                      Text(
-                                                        'Sunny',
-                                                        style: TextStyle(
-                                                          fontSize: 13.sp,
-                                                          color: AppTheme
-                                                              .beigeAccent,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                        ),
-                                                      ),
-                                                    ],
+                                                    data: (weather) {
+                                                      if (weather == null) {
+                                                        return Column(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .center,
+                                                          children: [
+                                                            Icon(
+                                                              Icons.wb_sunny,
+                                                              color: AppTheme
+                                                                  .beigeAccent,
+                                                              size: 36.sp,
+                                                            ),
+                                                            SizedBox(
+                                                              height: 6.h,
+                                                            ),
+                                                            Text(
+                                                              '28°C',
+                                                              style: TextStyle(
+                                                                fontSize: 28.sp,
+                                                                color: AppTheme
+                                                                    .whiteText,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w900,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        );
+                                                      }
+                                                      return Column(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .center,
+                                                        children: [
+                                                          Text(
+                                                            weather['icon'] ??
+                                                                Icons.wb_sunny,
+                                                            style: TextStyle(
+                                                              fontSize: 36.sp,
+                                                            ),
+                                                          ),
+                                                          SizedBox(height: 6.h),
+                                                          Text(
+                                                            '${weather['temperature']}°C',
+                                                            style: TextStyle(
+                                                              fontSize: 28.sp,
+                                                              color: AppTheme
+                                                                  .whiteText,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w900,
+                                                              shadows: [
+                                                                Shadow(
+                                                                  color: Colors
+                                                                      .black
+                                                                      .withOpacity(
+                                                                        0.3,
+                                                                      ),
+                                                                  offset:
+                                                                      const Offset(
+                                                                        0,
+                                                                        2,
+                                                                      ),
+                                                                  blurRadius: 6,
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    },
                                                   ),
                                                 ),
                                               ),
@@ -417,54 +523,120 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                                                         ),
                                                   ),
                                                   padding: EdgeInsets.all(16.w),
-                                                  child: Column(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      Icon(
-                                                        Icons.mosque,
-                                                        color: AppTheme
-                                                            .beigeAccent,
-                                                        size: 28.sp,
-                                                      ),
-                                                      SizedBox(height: 6.h),
-                                                      Text(
-                                                        'Maghrib',
-                                                        style: TextStyle(
-                                                          fontSize: 14.sp,
-                                                          color: AppTheme
-                                                              .beigeAccent,
-                                                          fontWeight:
-                                                              FontWeight.w600,
+                                                  child: prayerAsync.when(
+                                                    loading: () => Column(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        SizedBox(
+                                                          width: 20.sp,
+                                                          height: 20.sp,
+                                                          child:
+                                                              CircularProgressIndicator(
+                                                                strokeWidth: 2,
+                                                                color: AppTheme
+                                                                    .beigeAccent,
+                                                              ),
                                                         ),
-                                                      ),
-                                                      Text(
-                                                        '18:30',
-                                                        style: TextStyle(
-                                                          fontSize: 24.sp,
-                                                          color: AppTheme
-                                                              .whiteText,
-                                                          fontWeight:
-                                                              FontWeight.w900,
-                                                          shadows: [
-                                                            Shadow(
-                                                              color: Colors
-                                                                  .black
-                                                                  .withOpacity(
-                                                                    0.3,
-                                                                  ),
-                                                              offset:
-                                                                  const Offset(
-                                                                    0,
-                                                                    2,
-                                                                  ),
-                                                              blurRadius: 6,
+                                                      ],
+                                                    ),
+                                                    error: (error, stack) =>
+                                                        Column(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .center,
+                                                          children: [
+                                                            Icon(
+                                                              Icons.mosque,
+                                                              color: AppTheme
+                                                                  .beigeAccent,
+                                                              size: 28.sp,
+                                                            ),
+                                                            SizedBox(
+                                                              height: 6.h,
+                                                            ),
+                                                            Text(
+                                                              'Maghrib',
+                                                              style: TextStyle(
+                                                                fontSize: 14.sp,
+                                                                color: AppTheme
+                                                                    .beigeAccent,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
+                                                            ),
+                                                            Text(
+                                                              '18:30',
+                                                              style: TextStyle(
+                                                                fontSize: 24.sp,
+                                                                color: AppTheme
+                                                                    .whiteText,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w900,
+                                                              ),
                                                             ),
                                                           ],
                                                         ),
-                                                      ),
-                                                    ],
+                                                    data: (prayer) {
+                                                      final time =
+                                                          PrayerTimeService.formatTime(
+                                                            prayer['time'],
+                                                          );
+                                                      return Column(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .center,
+                                                        children: [
+                                                          Icon(
+                                                            Icons.mosque,
+                                                            color: AppTheme
+                                                                .beigeAccent,
+                                                            size: 28.sp,
+                                                          ),
+                                                          SizedBox(height: 6.h),
+                                                          Text(
+                                                            prayer['name'],
+                                                            style: TextStyle(
+                                                              fontSize: 14.sp,
+                                                              color: AppTheme
+                                                                  .beigeAccent,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                            ),
+                                                          ),
+                                                          Text(
+                                                            time,
+                                                            style: TextStyle(
+                                                              fontSize: 24.sp,
+                                                              color: AppTheme
+                                                                  .whiteText,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w900,
+                                                              shadows: [
+                                                                Shadow(
+                                                                  color: Colors
+                                                                      .black
+                                                                      .withOpacity(
+                                                                        0.3,
+                                                                      ),
+                                                                  offset:
+                                                                      const Offset(
+                                                                        0,
+                                                                        2,
+                                                                      ),
+                                                                  blurRadius: 6,
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    },
                                                   ),
                                                 ),
                                               ),

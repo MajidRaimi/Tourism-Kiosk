@@ -1,20 +1,23 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_locales/flutter_locales.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+
+import '../../models/attraction.dart';
+import '../../providers/attractions_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/attraction_card.dart';
-import '../../providers/attractions_provider.dart';
-import '../../models/attraction.dart';
 
 class FoodRestaurantsScreen extends ConsumerStatefulWidget {
   const FoodRestaurantsScreen({super.key});
 
   @override
-  ConsumerState<FoodRestaurantsScreen> createState() => _FoodRestaurantsScreenState();
+  ConsumerState<FoodRestaurantsScreen> createState() =>
+      _FoodRestaurantsScreenState();
 }
 
 class _FoodRestaurantsScreenState extends ConsumerState<FoodRestaurantsScreen> {
@@ -39,21 +42,32 @@ class _FoodRestaurantsScreenState extends ConsumerState<FoodRestaurantsScreen> {
     setState(() {
       _isSearching = _searchController.text.isNotEmpty;
       if (_isSearching) {
-        final allAttractions = ref.read(attractionsProvider);
-        final foodAttractions = allAttractions.where((a) => a.category == 'food').toList();
-        final query = _searchController.text.toLowerCase();
-        final isArabic = Locales.currentLocale(context)?.languageCode == 'ar';
+        ref.read(attractionsProvider).whenData((attractions) {
+          final foodAttractions = attractions
+              .where((a) => a.category == 'food')
+              .toList();
+          final query = _searchController.text.toLowerCase();
+          final isArabic = Locales.currentLocale(context)?.languageCode == 'ar';
 
-        _filteredAttractions = foodAttractions.where((attraction) {
-          final name = isArabic ? attraction.nameAr.toLowerCase() : attraction.name.toLowerCase();
-          final description = isArabic ? attraction.descriptionAr.toLowerCase() : attraction.description.toLowerCase();
-          return name.contains(query) || description.contains(query);
-        }).toList();
+          _filteredAttractions = foodAttractions.where((attraction) {
+            final name = isArabic
+                ? attraction.nameAr.toLowerCase()
+                : attraction.name.toLowerCase();
+            final description = isArabic
+                ? attraction.descriptionAr.toLowerCase()
+                : attraction.description.toLowerCase();
+            return name.contains(query) || description.contains(query);
+          }).toList();
+        });
       }
     });
   }
 
-  void _showQRCodeDialog(BuildContext context, String attractionName, String qrData) {
+  void _showQRCodeDialog(
+    BuildContext context,
+    String attractionName,
+    String qrData,
+  ) {
     showDialog(
       context: context,
       barrierColor: Colors.black.withOpacity(0.7),
@@ -227,9 +241,7 @@ class _FoodRestaurantsScreenState extends ConsumerState<FoodRestaurantsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final allAttractions = ref.watch(attractionsProvider);
-    final foodAttractions = allAttractions.where((a) => a.category == 'food').toList();
-    final attractions = _isSearching ? _filteredAttractions : foodAttractions;
+    final attractionsAsync = ref.watch(attractionsProvider);
     final isArabic = Locales.currentLocale(context)?.languageCode == 'ar';
 
     return Scaffold(
@@ -237,10 +249,7 @@ class _FoodRestaurantsScreenState extends ConsumerState<FoodRestaurantsScreen> {
         children: [
           // Background image
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/riyadh.jpg',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/images/riyadh.jpg', fit: BoxFit.cover),
           ),
           // Primary color overlay
           Positioned.fill(
@@ -342,7 +351,10 @@ class _FoodRestaurantsScreenState extends ConsumerState<FoodRestaurantsScreen> {
               // Search Bar
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 48.w, vertical: 24.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 48.w,
+                    vertical: 24.h,
+                  ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(24.r),
                     child: BackdropFilter(
@@ -412,184 +424,222 @@ class _FoodRestaurantsScreenState extends ConsumerState<FoodRestaurantsScreen> {
               ),
 
               // Attractions Grid or Empty State
-              if (attractions.isEmpty && !_isSearching)
-                // Empty State - No attractions at all
-                SliverFillRemaining(
+              attractionsAsync.when(
+                loading: () => SliverFillRemaining(
                   child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(48.w),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(32.r),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withOpacity(0.2),
-                                  Colors.white.withOpacity(0.1),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(32.r),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 10),
-                                  spreadRadius: -5,
-                                ),
-                              ],
-                            ),
-                            padding: EdgeInsets.all(48.w),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.restaurant_outlined,
-                                  size: 120.sp,
-                                  color: AppTheme.beigeAccent.withOpacity(0.5),
-                                ),
-                                SizedBox(height: 24.h),
-                                Text(
-                                  'No Restaurants Available',
-                                  style: TextStyle(
-                                    fontSize: 32.sp,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppTheme.whiteText,
-                                    shadows: [
-                                      Shadow(
-                                        color: Colors.black.withOpacity(0.3),
-                                        offset: const Offset(0, 2),
-                                        blurRadius: 6,
-                                      ),
-                                    ],
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                SizedBox(height: 12.h),
-                                Text(
-                                  'Check back later for dining options',
-                                  style: TextStyle(
-                                    fontSize: 18.sp,
-                                    color: AppTheme.beigeAccent,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-              else if (attractions.isEmpty && _isSearching)
-                // No Results State - Search returned nothing
-                SliverFillRemaining(
-                  child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(48.w),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(32.r),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withOpacity(0.2),
-                                  Colors.white.withOpacity(0.1),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(32.r),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 10),
-                                  spreadRadius: -5,
-                                ),
-                              ],
-                            ),
-                            padding: EdgeInsets.all(48.w),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.search_off_rounded,
-                                  size: 120.sp,
-                                  color: AppTheme.beigeAccent.withOpacity(0.5),
-                                ),
-                                SizedBox(height: 24.h),
-                                Text(
-                                  'No Results Found',
-                                  style: TextStyle(
-                                    fontSize: 32.sp,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppTheme.whiteText,
-                                    shadows: [
-                                      Shadow(
-                                        color: Colors.black.withOpacity(0.3),
-                                        offset: const Offset(0, 2),
-                                        blurRadius: 6,
-                                      ),
-                                    ],
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                SizedBox(height: 12.h),
-                                Text(
-                                  'Try searching with different keywords',
-                                  style: TextStyle(
-                                    fontSize: 18.sp,
-                                    color: AppTheme.beigeAccent,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-              else
-                // Attractions Grid
-                SliverPadding(
-                  padding: EdgeInsets.symmetric(horizontal: 48.w, vertical: 24.h),
-                  sliver: SliverGrid(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 16.w,
-                      mainAxisSpacing: 16.h,
-                      childAspectRatio: 0.75,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final attraction = attractions[index];
-                        return AttractionCard(
-                          attraction: attraction,
-                          isArabic: isArabic,
-                          onTap: () {
-                            _showQRCodeDialog(
-                              context,
-                              isArabic ? attraction.nameAr : attraction.name,
-                              'https://maps.google.com/?q=${attraction.name}',
-                            );
-                          },
-                        );
-                      },
-                      childCount: attractions.length,
+                    child: CircularProgressIndicator(
+                      color: AppTheme.beigeAccent,
                     ),
                   ),
                 ),
+                error: (error, stack) => SliverFillRemaining(
+                  child: Center(
+                    child: Text(
+                      'Error loading attractions',
+                      style: TextStyle(
+                        color: AppTheme.whiteText,
+                        fontSize: 18.sp,
+                      ),
+                    ),
+                  ),
+                ),
+                data: (allAttractions) {
+                  final foodAttractions = allAttractions
+                      .where((a) => a.category == 'food')
+                      .toList();
+                  final attractions = _isSearching
+                      ? _filteredAttractions
+                      : foodAttractions;
+
+                  if (attractions.isEmpty && !_isSearching) {
+                    // Empty State - No attractions at all
+                    return SliverFillRemaining(
+                      child: Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(48.w),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(32.r),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Colors.white.withOpacity(0.2),
+                                      Colors.white.withOpacity(0.1),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(32.r),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 10),
+                                      spreadRadius: -5,
+                                    ),
+                                  ],
+                                ),
+                                padding: EdgeInsets.all(48.w),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.restaurant_outlined,
+                                      size: 120.sp,
+                                      color: AppTheme.beigeAccent.withOpacity(
+                                        0.5,
+                                      ),
+                                    ),
+                                    SizedBox(height: 24.h),
+                                    Text(
+                                      'No Restaurants Available',
+                                      style: TextStyle(
+                                        fontSize: 32.sp,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppTheme.whiteText,
+                                        shadows: [
+                                          Shadow(
+                                            color: Colors.black.withOpacity(
+                                              0.3,
+                                            ),
+                                            offset: const Offset(0, 2),
+                                            blurRadius: 6,
+                                          ),
+                                        ],
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    SizedBox(height: 12.h),
+                                    Text(
+                                      'Check back later for dining options',
+                                      style: TextStyle(
+                                        fontSize: 18.sp,
+                                        color: AppTheme.beigeAccent,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  } else if (attractions.isEmpty && _isSearching) {
+                    // No Results State - Search returned nothing
+                    return SliverFillRemaining(
+                      child: Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(48.w),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(32.r),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Colors.white.withOpacity(0.2),
+                                      Colors.white.withOpacity(0.1),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(32.r),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 10),
+                                      spreadRadius: -5,
+                                    ),
+                                  ],
+                                ),
+                                padding: EdgeInsets.all(48.w),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.search_off_rounded,
+                                      size: 120.sp,
+                                      color: AppTheme.beigeAccent.withOpacity(
+                                        0.5,
+                                      ),
+                                    ),
+                                    SizedBox(height: 24.h),
+                                    Text(
+                                      'No Results Found',
+                                      style: TextStyle(
+                                        fontSize: 32.sp,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppTheme.whiteText,
+                                        shadows: [
+                                          Shadow(
+                                            color: Colors.black.withOpacity(
+                                              0.3,
+                                            ),
+                                            offset: const Offset(0, 2),
+                                            blurRadius: 6,
+                                          ),
+                                        ],
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    SizedBox(height: 12.h),
+                                    Text(
+                                      'Try searching with different keywords',
+                                      style: TextStyle(
+                                        fontSize: 18.sp,
+                                        color: AppTheme.beigeAccent,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  } else {
+                    // Attractions Grid
+                    return SliverPadding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 48.w,
+                        vertical: 24.h,
+                      ),
+                      sliver: SliverGrid(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 16.w,
+                          mainAxisSpacing: 16.h,
+                          childAspectRatio: 0.75,
+                        ),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final attraction = attractions[index];
+                          return AttractionCard(
+                            attraction: attraction,
+                            isArabic: isArabic,
+                            onTap: () {
+                              _showQRCodeDialog(
+                                context,
+                                isArabic ? attraction.nameAr : attraction.name,
+                                attraction.mapsUrl,
+                              );
+                            },
+                          );
+                        }, childCount: attractions.length),
+                      ),
+                    );
+                  }
+                },
+              ),
             ],
           ),
         ],
