@@ -1,0 +1,105 @@
+# Flutter/Dart specific
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# IDE specific
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.DS_Store
+
+# Android specific
+android/.gradle/
+android/app/build/
+android/app/release/
+android/app/debug/
+android/app/profile/
+android/captures/
+android/local.properties
+android/key.properties
+android/**/*.keystore
+
+# iOS specific
+ios/.generated/
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.flx
+ios/Flutter/app.zip
+ios/Flutter/flutter_assets/
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*
+ios/Pods/
+ios/.symlinks/
+ios/Podfile.lock
+
+# Web specific (we'll rebuild in Docker)
+web/icons/Icon-*.png
+
+# Windows specific
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugin_registrant.h
+windows/flutter/generated_plugins.cmake
+
+# Linux specific
+linux/flutter/generated_plugin_registrant.cc
+linux/flutter/generated_plugin_registrant.h
+linux/flutter/generated_plugins.cmake
+
+# macOS specific
+macos/Flutter/GeneratedPluginRegistrant.swift
+macos/Flutter/ephemeral/
+macos/.symlinks/
+
+# Documentation
+*.md
+LICENSE
+docs/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Testing
+test/
+integration_test/
+coverage/
+
+# Temporary files
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Docker files (avoid copying them into the image)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Development environment
+.env
+.env.local
+.env.*.local
+
+# Node modules (if any)
+node_modules/
+
+# Analysis
+analysis_options.yaml
+devtools_options.yaml

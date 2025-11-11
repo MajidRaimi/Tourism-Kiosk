@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  tourism-kiosk:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tourism-kiosk-app
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Riyadh
+    networks:
+      - kiosk-network
+    labels:
+      - "com.tourism.kiosk.description=Tourism Kiosk Web Application"
+      - "com.tourism.kiosk.version=1.0.0"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  kiosk-network:
+    driver: bridge
+    name: tourism-kiosk-network
